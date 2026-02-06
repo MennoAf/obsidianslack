@@ -146,19 +146,19 @@ class ObsidianWriter:
         frontmatter += f"title: {sanitize_for_yaml(title)}\n"
         frontmatter += "tags:\n"
         frontmatter += format_tags_for_frontmatter(tags) + "\n"
-        frontmatter += f"category: {category}\n"
+        frontmatter += f"category: {sanitize_for_yaml(category)}\n"
         frontmatter += "source: slack\n"
-        
+
         if source_domain:
-            frontmatter += f"source_domain: {source_domain}\n"
-        
-        frontmatter += f"slack_ts: {slack_ts}\n"
-        
+            frontmatter += f"source_domain: {sanitize_for_yaml(source_domain)}\n"
+
+        frontmatter += f"slack_ts: {sanitize_for_yaml(str(slack_ts))}\n"
+
         if slack_thread_ts:
-            frontmatter += f"slack_thread_ts: {slack_thread_ts}\n"
-        
+            frontmatter += f"slack_thread_ts: {sanitize_for_yaml(str(slack_thread_ts))}\n"
+
         frontmatter += "status: unprocessed\n"
-        frontmatter += f"priority: {priority}\n"
+        frontmatter += f"priority: {sanitize_for_yaml(str(priority))}\n"
         
         if parent_note:
             # Remove .md extension for wikilink

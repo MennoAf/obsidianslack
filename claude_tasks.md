@@ -229,7 +229,7 @@ def _extract_json_from_markdown(self, text: str) -> dict:
 
 ---
 
-### 2.2 Sanitize ALL YAML frontmatter values (`obsidian_writer.py:149-161`)
+### 2.2 ~~Sanitize ALL YAML frontmatter values (`obsidian_writer.py:149-161`)~~ ✅ COMPLETED
 
 **Why:** Only `title` uses `sanitize_for_yaml()`. `category`, `source_domain`, `priority`, `slack_ts` are raw.
 
