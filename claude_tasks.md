@@ -359,7 +359,7 @@ def _clean_domain(self, domain: str) -> str:
 
 ---
 
-### 2.9 Guard `int()` conversions in `config.py` (lines 14, 27)
+### 2.9 ~~Guard `int()` conversions in `config.py` (lines 14, 27)~~ ✅ COMPLETED
 
 **Why:** Non-numeric env var values crash the app at import time with unhelpful `ValueError`.
 

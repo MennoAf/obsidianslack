@@ -8,10 +8,32 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+
+def _safe_int(env_var: str, default: int) -> int:
+    """
+    Safely convert environment variable to integer with clear error message.
+
+    Args:
+        env_var: Name of environment variable
+        default: Default value if not set
+
+    Returns:
+        Integer value
+
+    Raises:
+        ValueError: If value cannot be converted to integer
+    """
+    val = os.getenv(env_var, str(default))
+    try:
+        return int(val)
+    except ValueError:
+        raise ValueError(f"Environment variable {env_var} must be an integer, got: '{val}'")
+
+
 # Anthropic Configuration
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-5-20250929")
-MAX_TOKENS = int(os.getenv("MAX_TOKENS", "4096"))
+MAX_TOKENS = _safe_int("MAX_TOKENS", 4096)
 
 # Slack Configuration
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -24,7 +46,7 @@ CLAUDE_FOLDER_NAME = os.getenv("CLAUDE_FOLDER_NAME", "40_Claude")
 CLAUDE_FOLDER_PATH = OBSIDIAN_VAULT_PATH / CLAUDE_FOLDER_NAME
 
 # Application Configuration
-FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
+FLASK_PORT = _safe_int("FLASK_PORT", 5000)
 DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() == "true"
 
 # Obsidian Folder Structure
