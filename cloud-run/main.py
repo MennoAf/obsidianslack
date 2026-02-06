@@ -13,6 +13,7 @@ import config
 from slack_handler import SlackHandler
 from claude_processor import ClaudeProcessor
 from obsidian_writer import ObsidianWriter
+from plugins.plugin_loader import PluginLoader
 
 # Setup logging
 logging.basicConfig(
@@ -57,6 +58,10 @@ app = Flask(__name__)
 slack_handler = SlackHandler()
 claude_processor = ClaudeProcessor()
 obsidian_writer = ObsidianWriter()
+
+# Initialize plugin system
+plugin_loader = PluginLoader()
+plugins = plugin_loader.discover_and_load()
 
 
 @app.route('/slack/events', methods=['POST'])
@@ -115,7 +120,28 @@ def process_slack_event(event_data: dict):
         return
     
     logger.info(f"Processing message: {event_info['message_ts']}")
-    
+
+    # Call plugin hook: on_message_received
+    message_metadata = {
+        'user_id': event_info.get('user_id'),
+        'channel_id': event_info['channel_id'],
+        'slack_ts': event_info['message_ts'],
+        'thread_ts': event_info.get('thread_ts'),
+        'is_reply': event_info['is_reply']
+    }
+
+    hook_results = plugin_loader.call_hook(
+        'on_message_received',
+        event_info['text'],
+        message_metadata
+    )
+
+    # Check if any plugin wants to skip processing
+    for result in hook_results:
+        if isinstance(result, dict) and result.get('skip'):
+            logger.info("Message processing skipped by plugin")
+            return
+
     # Get thread context if this is a reply
     thread_context = None
     parent_note_filename = None
@@ -135,12 +161,36 @@ def process_slack_event(event_data: dict):
     
     # Process message with Claude
     try:
+        # Call plugin hook: on_processing_start
+        plugin_loader.call_hook(
+            'on_processing_start',
+            event_info['text'],
+            message_metadata
+        )
+
         processed_data = claude_processor.process_message(
             message_text=event_info['text'],
             thread_context=thread_context
         )
+
+        # Call plugin hook: on_processing_complete
+        plugin_loader.call_hook(
+            'on_processing_complete',
+            processed_data,
+            event_info['text'],
+            message_metadata
+        )
+
     except Exception as e:
         logger.error(f"Error processing with Claude: {e}", exc_info=True)
+
+        # Call plugin hook: on_error
+        plugin_loader.call_hook(
+            'on_error',
+            e,
+            {'stage': 'claude_processing', 'message': event_info['text']}
+        )
+
         # React with error emoji
         slack_handler.add_reaction(
             event_info['channel_id'],
@@ -158,7 +208,28 @@ def process_slack_event(event_data: dict):
         )
         
         logger.info(f"Created note: {result['filename']}")
-        
+
+        # Call plugin hook: on_note_created
+        note_metadata = {
+            'title': processed_data.get('title'),
+            'category': processed_data.get('category'),
+            'tags': processed_data.get('base_tags', []),
+            'has_tasks': processed_data.get('has_tasks', False),
+            'channel_id': event_info['channel_id'],
+            'slack_ts': event_info['message_ts']
+        }
+
+        # Read note content for plugins
+        from pathlib import Path
+        note_content = Path(result['filepath']).read_text(encoding='utf-8')
+
+        plugin_loader.call_hook(
+            'on_note_created',
+            result['filepath'],
+            note_content,
+            note_metadata
+        )
+
         # React with checkmark to confirm processing
         slack_handler.add_reaction(
             event_info['channel_id'],
@@ -176,6 +247,14 @@ def process_slack_event(event_data: dict):
         
     except Exception as e:
         logger.error(f"Error creating note: {e}", exc_info=True)
+
+        # Call plugin hook: on_error
+        plugin_loader.call_hook(
+            'on_error',
+            e,
+            {'stage': 'note_creation', 'message': event_info['text']}
+        )
+
         # React with error emoji
         slack_handler.add_reaction(
             event_info['channel_id'],

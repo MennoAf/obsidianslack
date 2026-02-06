@@ -10,21 +10,23 @@ This guide explains how to customize ObsidianSlack without modifying Python code
 2. [Customizing the Claude Prompt](#customizing-the-claude-prompt)
 3. [Customizing Tag Rules](#customizing-tag-rules)
 4. [Customizing Note Templates](#customizing-note-templates)
-5. [Environment Variable Reference](#environment-variable-reference)
-6. [Common Customization Examples](#common-customization-examples)
-7. [Troubleshooting](#troubleshooting)
+5. [Using Plugins](#using-plugins)
+6. [Environment Variable Reference](#environment-variable-reference)
+7. [Common Customization Examples](#common-customization-examples)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Overview
 
-ObsidianSlack provides three layers of customization:
+ObsidianSlack provides four layers of customization:
 
-| What | File | Purpose |
-|------|------|---------|
+| What | File/Directory | Purpose |
+|------|----------------|---------|
 | **Prompt Template** | `templates/categorization_prompt.txt` | Control how Claude analyzes messages |
 | **Tag Rules** | `config/tag_rules.yaml` | Define automatic tag mappings |
 | **Note Template** | `templates/note_template.md.j2` | Control note structure and formatting |
+| **Plugins** | `plugins/*.py` | Extend with custom processing hooks |
 
 All files have sensible defaults. The system gracefully falls back if files are missing or invalid.
 
@@ -389,6 +391,140 @@ task-count:: {{ tasks|length }}
 
 ---
 
+## Using Plugins
+
+### What Are Plugins?
+
+Plugins let you extend ObsidianSlack functionality without modifying core code. They use hooks that run at different stages of message processing.
+
+### Quick Start
+
+#### 1. Create a Plugin
+
+```python
+# cloud-run/plugins/my_plugin.py
+from plugins.base import ProcessorPlugin
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class MyPlugin(ProcessorPlugin):
+    """My custom plugin."""
+
+    def on_note_created(self, note_path, note_content, metadata):
+        """Called after a note is created."""
+        logger.info(f"New note: {metadata['title']}")
+        # Add your custom logic here
+```
+
+#### 2. Plugin Loads Automatically
+
+Place your plugin in `cloud-run/plugins/` and it loads automatically on startup.
+
+### Available Hooks
+
+Plugins can implement any of these hooks (all optional):
+
+| Hook | When It Runs | Use Cases |
+|------|--------------|-----------|
+| `on_message_received` | Message received from Slack | Filter messages, pre-process text |
+| `on_processing_start` | Before Claude processes | Modify input, add context |
+| `on_processing_complete` | After Claude processes | Modify output, add tags |
+| `on_note_created` | After note written | Sync to services, add reactions |
+| `on_error` | When error occurs | Custom error handling |
+
+### Example: Sync to Notion
+
+```python
+from plugins.base import ProcessorPlugin
+import requests
+import os
+
+
+class NotionSyncPlugin(ProcessorPlugin):
+    """Sync notes to Notion database."""
+
+    def __init__(self):
+        super().__init__()
+        self.notion_api_key = os.getenv('NOTION_API_KEY')
+        self.database_id = os.getenv('NOTION_DATABASE_ID')
+
+    def on_note_created(self, note_path, note_content, metadata):
+        """Create a Notion page for each note."""
+        if not self.notion_api_key:
+            return
+
+        # Create Notion page
+        headers = {
+            'Authorization': f'Bearer {self.notion_api_key}',
+            'Content-Type': 'application/json',
+            'Notion-Version': '2022-06-28'
+        }
+
+        data = {
+            'parent': {'database_id': self.database_id},
+            'properties': {
+                'Title': {
+                    'title': [{'text': {'content': metadata['title']}}]
+                },
+                'Category': {
+                    'select': {'name': metadata['category']}
+                },
+                'Tags': {
+                    'multi_select': [{'name': tag} for tag in metadata['tags']]
+                }
+            }
+        }
+
+        response = requests.post(
+            'https://api.notion.com/v1/pages',
+            headers=headers,
+            json=data
+        )
+
+        if response.ok:
+            logger.info(f"Synced to Notion: {metadata['title']}")
+```
+
+### Example Plugins
+
+See `cloud-run/plugins/examples/` for complete examples:
+
+- **`logging_plugin.py`** - Enhanced logging and analytics
+- **`filter_plugin.py`** - Filter messages by patterns
+- **`slack_reaction_plugin.py`** - Custom Slack reactions
+
+To enable an example:
+```bash
+mv cloud-run/plugins/examples/logging_plugin.py cloud-run/plugins/
+```
+
+### Configuration
+
+**Disable all plugins:**
+```bash
+export PLUGINS_ENABLED=false
+```
+
+**Configure plugin via environment:**
+```python
+# In your plugin
+def __init__(self):
+    super().__init__()
+    self.api_key = os.getenv('MY_PLUGIN_API_KEY')
+```
+
+### Full Documentation
+
+See `cloud-run/plugins/README.md` for complete plugin documentation:
+- All hook signatures and parameters
+- Best practices
+- Advanced examples
+- Troubleshooting
+
+---
+
 ## Environment Variable Reference
 
 ### Prompt Template
@@ -409,6 +545,12 @@ task-count:: {{ tasks|length }}
 |----------|---------|-------------|
 | `NOTE_TEMPLATE` | `note_template.md.j2` | Template filename |
 | `NOTE_TEMPLATE_DIR` | `cloud-run/templates/` | Template directory path |
+
+### Plugins
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PLUGINS_ENABLED` | `true` | Set to `false` to disable all plugins |
 
 ### Setting Environment Variables
 
