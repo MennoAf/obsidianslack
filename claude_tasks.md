@@ -4,11 +4,32 @@ This document contains all identified issues from a full code review, organized 
 
 Project root: `/Users/jasonbauman/Documents/code_projects/ObsidianSlack/`
 
+**Important:** After 2026-02-06 restructure, all Python files referenced below are in `cloud-run/` directory. When fixing issues, prepend `cloud-run/` to file paths (e.g., `main.py` → `cloud-run/main.py`).
+
 ---
 
-## Priority 1: Security — Must Fix
+## ✅ Completed (Do Not Redo)
 
-### 1.1 Create `.dockerignore`
+### Priority 1 Security Fixes — Completed in commit `73334d3` (2026-02-06)
+
+All 8 Priority 1 security vulnerabilities have been fixed:
+
+1. ✅ **Created `.dockerignore`** - Prevents secrets from being copied into Docker images
+2. ✅ **Moved signature verification before JSON parsing** - Fixed authentication bypass in `main.py`
+3. ✅ **Fixed Flask debug mode RCE risk** - Debug mode now binds to localhost only
+4. ✅ **Added non-root user to Docker container** - Container runs as `appuser`, not root
+5. ✅ **Removed `--allow-unauthenticated` from Cloud Run** - Improved infrastructure security
+6. ✅ **Validated `CLAUDE_FOLDER_NAME` against path traversal** - Prevents directory escape in `config.py`
+7. ✅ **Sanitized file paths in `github_sync.py`** - Prevents path traversal attacks
+8. ✅ **Removed sensitive data from `/health` endpoint** - No longer exposes internal paths
+
+**Do not reimplement these fixes** - they are already in the codebase.
+
+---
+
+## Priority 1: Security — Must Fix ~~(COMPLETED - See Above)~~
+
+### 1.1 ~~Create `.dockerignore`~~ ✅ COMPLETED
 
 **Why:** `COPY . .` in `Dockerfile:19` copies `.env`, `.git/`, logs, and secrets into the Docker image.
 
@@ -30,7 +51,7 @@ brain_dump.log
 
 ---
 
-### 1.2 Move signature verification before body parsing (`main.py`)
+### 1.2 ~~Move signature verification before body parsing (`main.py`)~~ ✅ COMPLETED
 
 **Why:** At `main.py:44-55`, `request.json` is parsed and the `url_verification` challenge is returned (line 47-49) BEFORE `slack_handler.verify_request()` runs on line 55. This bypasses authentication entirely for `url_verification` requests.
 
@@ -63,7 +84,7 @@ Also use `.get('challenge', '')` instead of `data['challenge']` to avoid `KeyErr
 
 ---
 
-### 1.3 Fix Flask debug mode RCE risk (`main.py:190-194`)
+### 1.3 ~~Fix Flask debug mode RCE risk (`main.py:190-194`)~~ ✅ COMPLETED
 
 **Why:** When `DEBUG_MODE=True`, the Werkzeug interactive debugger is exposed on `0.0.0.0` — this is remote code execution.
 
@@ -86,7 +107,7 @@ app.run(host=host, port=config.FLASK_PORT, debug=config.DEBUG_MODE)
 
 ---
 
-### 1.4 Add `USER` directive to `Dockerfile`
+### 1.4 ~~Add `USER` directive to `Dockerfile`~~ ✅ COMPLETED
 
 **Why:** Container runs as root. If compromised, attacker has root inside the container.
 
@@ -99,7 +120,7 @@ USER appuser
 
 ---
 
-### 1.5 Remove `--allow-unauthenticated` from `cloudbuild.yaml:24`
+### 1.5 ~~Remove `--allow-unauthenticated` from `cloudbuild.yaml:24`~~ ✅ COMPLETED
 
 **Why:** The Cloud Run service is publicly accessible to the entire internet. Even though Slack signature verification exists at the app layer, defense-in-depth says infrastructure should also restrict access.
 
@@ -107,7 +128,7 @@ USER appuser
 
 ---
 
-### 1.6 Validate `CLAUDE_FOLDER_NAME` against path traversal (`config.py:23-24`)
+### 1.6 ~~Validate `CLAUDE_FOLDER_NAME` against path traversal (`config.py:23-24`)~~ ✅ COMPLETED
 
 **Why:** If `CLAUDE_FOLDER_NAME` is set to `../../etc`, `CLAUDE_FOLDER_PATH` escapes the vault directory.
 
@@ -122,7 +143,7 @@ if not str(CLAUDE_FOLDER_PATH.resolve()).startswith(str(OBSIDIAN_VAULT_PATH.reso
 
 ---
 
-### 1.7 Sanitize `folder`/`filename` in `github_sync.py` (lines 66, 125, 170)
+### 1.7 ~~Sanitize `folder`/`filename` in `github_sync.py` (lines 66, 125, 170)~~ ✅ COMPLETED
 
 **Why:** `file_path = f"{folder}/{filename}"` — unsanitized inputs could write to unexpected locations.
 
@@ -142,7 +163,7 @@ Use it everywhere `file_path` is constructed.
 
 ---
 
-### 1.8 Remove `/health` endpoint info disclosure (`main.py:154-161`)
+### 1.8 ~~Remove `/health` endpoint info disclosure (`main.py:154-161`)~~ ✅ COMPLETED
 
 **Why:** Unauthenticated endpoint exposes filesystem path and Slack channel ID.
 
@@ -431,15 +452,19 @@ No app-level guard against API cost explosion if Slack channel gets flooded. Con
 
 ## File Reference
 
+**Note:** After project restructure (2026-02-06), all Python files are now in `cloud-run/` directory.
+
 | File | Lines of Code | Primary Role |
 |------|--------------|--------------|
-| `main.py` | ~194 | Flask app, event routing |
-| `config.py` | ~240 | Env vars, prompts, validation |
-| `slack_handler.py` | ~197 | Slack API client, signature verification |
-| `claude_processor.py` | ~216 | Claude API, JSON extraction |
-| `obsidian_writer.py` | ~343 | File writing, frontmatter, replies |
-| `tag_generator.py` | ~170 | Tag extraction from content |
-| `utils.py` | ~282 | Helpers: YAML, URLs, filenames, timestamps |
-| `github_sync.py` | ~248 | GitHub API for Cloud Run deployment |
-| `Dockerfile` | ~32 | Container build |
-| `cloudbuild.yaml` | ~27 | GCP Cloud Build pipeline |
+| `cloud-run/main.py` | ~194 | Flask app, event routing |
+| `cloud-run/config.py` | ~240 | Env vars, prompts, validation |
+| `cloud-run/slack_handler.py` | ~197 | Slack API client, signature verification |
+| `cloud-run/claude_processor.py` | ~216 | Claude API, JSON extraction |
+| `cloud-run/obsidian_writer.py` | ~343 | File writing, frontmatter, replies |
+| `cloud-run/tag_generator.py` | ~170 | Tag extraction from content |
+| `cloud-run/utils.py` | ~282 | Helpers: YAML, URLs, filenames, timestamps |
+| `cloud-run/github_sync.py` | ~248 | GitHub API for Cloud Run deployment |
+| `cloud-run/Dockerfile` | ~32 | Container build |
+| `cloud-run/cloudbuild.yaml` | ~27 | GCP Cloud Build pipeline |
+| `local-sync/sync_from_github.sh` | ~40 | Unix/macOS sync script |
+| `local-sync/sync_from_github.ps1` | ~60 | Windows PowerShell sync script |

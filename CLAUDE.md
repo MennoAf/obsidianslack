@@ -6,10 +6,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ObsidianSlack captures Slack messages from a designated "brain dump" channel, processes them through Claude AI for structured analysis, and writes them as Obsidian-compatible markdown notes with YAML frontmatter, tags, and wikilinks.
 
+## Project Structure
+
+```
+ObsidianSlack/
+├── README.md                  # Project overview + quick start
+├── CLAUDE.md                  # This file - developer instructions
+├── claude_tasks.md            # Bug tracking and known issues
+├── .env.example               # Environment variable template
+├── .gitignore                 # Git exclusions
+│
+├── cloud-run/                 # Cloud Run deployment files
+│   ├── README.md              # Cloud deployment guide
+│   ├── main.py                # Flask webhook server
+│   ├── slack_handler.py       # Slack API client
+│   ├── claude_processor.py    # Claude AI integration
+│   ├── obsidian_writer.py     # Note writing logic
+│   ├── tag_generator.py       # Tag extraction
+│   ├── utils.py               # Helper functions
+│   ├── config.py              # Configuration
+│   ├── github_sync.py         # GitHub push integration
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile             # Container image
+│   ├── cloudbuild.yaml        # GCP build config
+│   └── .dockerignore          # Docker exclusions
+│
+└── local-sync/                # Local sync scripts
+    ├── README.md              # Local sync guide
+    ├── sync_from_github.sh    # Unix/macOS sync script
+    └── sync_from_github.ps1   # Windows PowerShell sync script
+```
+
 ## Commands
 
 ```bash
 # Setup
+cd cloud-run
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
@@ -35,11 +67,15 @@ No test suite exists yet.
 ### Data Flow
 
 ```
-Slack webhook POST → main.py (/slack/events)
+Slack webhook POST → cloud-run/main.py (/slack/events)
   → slack_handler.py (verify signature, extract message, filter subtypes)
   → claude_processor.py (build prompt from config.CATEGORIZATION_PROMPT, call Claude API, parse JSON response)
-  → obsidian_writer.py (generate tags via tag_generator.py, build frontmatter + content, write .md to vault)
+  → obsidian_writer.py (generate tags via tag_generator.py, build frontmatter + content)
+  → github_sync.py (push .md to GitHub repo)
   → Slack reaction (checkmark on success, X on failure)
+
+GitHub repo → local-sync/sync_from_github.sh (cron/scheduler)
+  → git pull → local Obsidian vault/40_Claude/inbox/
 ```
 
 ### Key Design Decisions
@@ -54,18 +90,20 @@ Slack webhook POST → main.py (/slack/events)
 ### Module Dependency Graph
 
 ```
-main.py → slack_handler.py → config
-        → claude_processor.py → config, utils
-        → obsidian_writer.py → config, utils, tag_generator
-                                tag_generator → config, utils
-github_sync.py (standalone, not yet wired in)
+cloud-run/main.py → slack_handler.py → config
+                  → claude_processor.py → config, utils
+                  → obsidian_writer.py → config, utils, tag_generator
+                                          tag_generator → config, utils
+                  → github_sync.py → config, utils
+
+local-sync/sync_from_github.sh (standalone shell script)
 ```
 
 ### Configuration
 
-All config is in `config.py`, loaded from env vars (`.env` file via python-dotenv). `validate_config()` runs at startup and fails fast if required vars are missing. `setup_obsidian_folders()` creates the subfolder structure automatically.
+All config is in `cloud-run/config.py`, loaded from env vars (`.env` file via python-dotenv). `validate_config()` runs at startup and fails fast if required vars are missing. `setup_obsidian_folders()` creates the subfolder structure automatically.
 
-Critical env vars: `ANTHROPIC_API_KEY`, `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_BRAIN_DUMP_CHANNEL_ID`, `OBSIDIAN_VAULT_PATH`. See `.env.example` for the full list.
+Critical env vars: `ANTHROPIC_API_KEY`, `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_BRAIN_DUMP_CHANNEL_ID`, `GITHUB_TOKEN`, `GITHUB_REPO`. See `.env.example` for the full list.
 
 ## Known Issues
 
