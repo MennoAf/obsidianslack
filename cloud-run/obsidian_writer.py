@@ -301,10 +301,6 @@ class ObsidianWriter:
                     # Read existing content
                     content = f.read()
 
-                    # Check if Replies section exists
-                    if "## Replies" not in content:
-                        content += "\n\n## Replies\n"
-
                     # Add reply link
                     reply_name = reply_filename.replace('.md', '')
                     reply_line = (
@@ -312,8 +308,16 @@ class ObsidianWriter:
                         f"*{format_timestamp(timestamp)}*\n"
                     )
 
-                    # Append reply
-                    content += reply_line
+                    # Find or create Replies section and insert reply
+                    replies_header = "## Replies\n"
+                    if replies_header in content:
+                        # Find position right after "## Replies\n"
+                        pos = content.index(replies_header) + len(replies_header)
+                        # Insert reply at that position
+                        content = content[:pos] + reply_line + content[pos:]
+                    else:
+                        # Create Replies section at end
+                        content += "\n\n" + replies_header + reply_line
 
                     # Write back
                     f.seek(0)

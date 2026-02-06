@@ -406,7 +406,7 @@ def _append_reply_to_parent(self, parent_filename, reply_line):
 
 ---
 
-### 2.11 Fix reply appended to wrong location (`obsidian_writer.py:299-310`)
+### 2.11 ~~Fix reply appended to wrong location (`obsidian_writer.py:299-310`)~~ ✅ COMPLETED
 
 **Why:** Replies are always appended to the end of the file, not within the "## Replies" section.
 
