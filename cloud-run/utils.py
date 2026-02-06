@@ -214,22 +214,28 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = '...') -> str:
 def format_tags_for_frontmatter(tags: List[str]) -> str:
     """
     Format tags for YAML frontmatter.
-    
+
     Args:
         tags: List of tag strings
-        
+
     Returns:
         Formatted YAML list of tags
     """
     if not tags:
         return "  - claude"
-    
+
     formatted_tags = []
     for tag in sorted(tags):
         # Ensure tags don't have leading hashtags
         tag = tag.lstrip('#')
+
+        # Quote tags containing YAML special characters
+        if any(c in tag for c in [':', '#', '[', ']', '{', '}', '!', '&', '*', ',', '>', '|', '-', '?', '%']):
+            tag = tag.replace('"', '\\"')  # Escape quotes
+            tag = f'"{tag}"'
+
         formatted_tags.append(f"  - {tag}")
-    
+
     return '\n'.join(formatted_tags)
 
 

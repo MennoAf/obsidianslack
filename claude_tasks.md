@@ -269,7 +269,7 @@ def sanitize_for_yaml(value: str) -> str:
 
 ---
 
-### 2.4 Sanitize tags for YAML (`utils.py:214-233`)
+### 2.4 ~~Sanitize tags for YAML (`utils.py:214-233`)~~ ✅ COMPLETED
 
 **Why:** Tags like `source/evil: injected` are placed into YAML as-is, parsed as mappings.
 
