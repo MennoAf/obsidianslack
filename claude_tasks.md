@@ -436,7 +436,7 @@ In `generate_filename` or `_write_file`, check if the file already exists and ap
 
 The Cloud Run deploy command should specify resource limits and a dedicated service account.
 
-### 3.6 Pin Docker base image (`Dockerfile:2`)
+### 3.6 ~~Pin Docker base image (`Dockerfile:2`)~~ ✅ COMPLETED
 
 Use a digest-pinned image for reproducibility: `python:3.11-slim@sha256:<hash>`.
 

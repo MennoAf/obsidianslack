@@ -1,5 +1,7 @@
 # Use official Python runtime as base image
-FROM python:3.11-slim
+# Pinned to specific version for reproducibility
+# Update periodically: https://hub.docker.com/_/python
+FROM python:3.11.8-slim
 
 # Set working directory
 WORKDIR /app
