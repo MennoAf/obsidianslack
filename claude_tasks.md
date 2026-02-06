@@ -285,7 +285,7 @@ for tag in sorted(tags):
 
 ---
 
-### 2.5 Filter message subtypes with a whitelist (`slack_handler.py:195-197`)
+### 2.5 ~~Filter message subtypes with a whitelist (`slack_handler.py:195-197`)~~ ✅ COMPLETED
 
 **Why:** Only `message_changed` and `message_deleted` are blocked. `channel_join`, `channel_topic`, etc. still get processed as user messages.
 

@@ -191,8 +191,9 @@ class SlackHandler:
             logger.debug("Ignoring bot message")
             return None
         
-        # Ignore message edits and deletions
-        if event.get('subtype') in ['message_changed', 'message_deleted']:
+        # Only process regular messages (no subtype)
+        # Bot messages are already filtered above
+        if event.get('subtype') is not None:
             logger.debug(f"Ignoring message subtype: {event.get('subtype')}")
             return None
         
