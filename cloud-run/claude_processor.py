@@ -74,8 +74,12 @@ class ClaudeProcessor:
                     }
                 ]
             )
-            
+
             # Extract text content from response
+            if not response.content:
+                logger.error("Claude returned empty response")
+                return self._create_fallback_result(message_text)
+
             response_text = response.content[0].text
             logger.debug(f"Claude response: {response_text}")
             
