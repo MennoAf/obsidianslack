@@ -1,0 +1,21 @@
+# Core dependencies
+anthropic==0.39.0
+slack-sdk==3.33.4
+python-dotenv==1.0.1
+
+# Web framework for webhook handling
+flask==3.1.0
+
+# Utility libraries
+python-dateutil==2.9.0
+pytz==2024.2
+requests==2.32.3
+
+# GitHub sync
+PyGithub==2.1.1
+
+# Production WSGI server
+gunicorn==21.2.0
+
+# Optional: for better async performance
+aiohttp==3.11.11
