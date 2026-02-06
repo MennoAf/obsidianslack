@@ -40,21 +40,22 @@ def slack_events():
     
     This endpoint receives events from Slack and processes brain dump messages.
     """
-    # Parse request
-    data = request.json
-    
-    # Handle URL verification challenge
-    if data.get('type') == 'url_verification':
-        logger.info("Handling URL verification challenge")
-        return jsonify({'challenge': data['challenge']})
-    
-    # Verify request authenticity
+    # 1. Verify signature FIRST (uses raw body)
+    raw_body = request.get_data()
     timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
     signature = request.headers.get('X-Slack-Signature', '')
-    
-    if not slack_handler.verify_request(request.get_data().decode('utf-8'), timestamp, signature):
+
+    if not slack_handler.verify_request(raw_body.decode('utf-8'), timestamp, signature):
         logger.warning("Invalid Slack request signature")
         return jsonify({'error': 'Invalid signature'}), 403
+
+    # 2. THEN parse JSON
+    data = request.json
+
+    # 3. Handle URL verification challenge
+    if data.get('type') == 'url_verification':
+        logger.info("Handling URL verification challenge")
+        return jsonify({'challenge': data.get('challenge', '')})
     
     # Handle event
     if data.get('type') == 'event_callback':
@@ -154,11 +155,7 @@ def process_slack_event(event_data: dict):
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
-    return jsonify({
-        'status': 'healthy',
-        'vault_path': str(config.CLAUDE_FOLDER_PATH),
-        'channel_id': config.SLACK_BRAIN_DUMP_CHANNEL_ID
-    }), 200
+    return jsonify({'status': 'healthy'}), 200
 
 
 @app.route('/', methods=['GET'])
@@ -187,8 +184,9 @@ def main():
         
         # Start Flask server
         logger.info(f"Starting server on port {config.FLASK_PORT}")
+        host = '127.0.0.1' if config.DEBUG_MODE else '0.0.0.0'
         app.run(
-            host='0.0.0.0',
+            host=host,
             port=config.FLASK_PORT,
             debug=config.DEBUG_MODE
         )

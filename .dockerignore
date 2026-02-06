@@ -1,0 +1,11 @@
+.env
+env.yaml
+.git
+.gitignore
+__pycache__
+venv/
+brain_dump.log
+*.md
+!README.md
+.claude/
+.DS_Store

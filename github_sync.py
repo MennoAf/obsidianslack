@@ -6,6 +6,7 @@ which can then be synced to local Obsidian vault via git pull.
 """
 import os
 import logging
+import posixpath
 from typing import Optional
 from pathlib import Path
 from github import Github, GithubException
@@ -43,6 +44,13 @@ class GitHubSync:
             logger.error(f"Failed to connect to GitHub repo: {e}")
             raise
     
+    def _safe_path(self, folder: str, filename: str) -> str:
+        """Build a repo-relative path, rejecting traversal attempts."""
+        path = posixpath.normpath(f"{folder}/{filename}")
+        if path.startswith('..') or path.startswith('/'):
+            raise ValueError(f"Invalid path: {path}")
+        return path
+
     def write_note(
         self,
         filename: str,
@@ -63,7 +71,7 @@ class GitHubSync:
             True if successful, False otherwise
         """
         # Construct file path
-        file_path = f"{folder}/{filename}"
+        file_path = self._safe_path(folder, filename)
         
         # Default commit message
         if not commit_message:
@@ -122,7 +130,7 @@ class GitHubSync:
         Returns:
             True if successful, False otherwise
         """
-        file_path = f"{folder}/{filename}"
+        file_path = self._safe_path(folder, filename)
         
         try:
             # Get existing file
@@ -167,7 +175,7 @@ class GitHubSync:
         Returns:
             True if file exists
         """
-        file_path = f"{folder}/{filename}"
+        file_path = self._safe_path(folder, filename)
         
         try:
             self.repo.get_contents(file_path, ref=self.branch)

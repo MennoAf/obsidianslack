@@ -261,6 +261,14 @@ def validate_config():
             f"OBSIDIAN_VAULT_PATH is not set or does not exist: "
             f"{OBSIDIAN_VAULT_PATH}"
         )
+
+    if OBSIDIAN_VAULT_PATH and OBSIDIAN_VAULT_PATH.exists():
+        if not str(CLAUDE_FOLDER_PATH.resolve()).startswith(
+            str(OBSIDIAN_VAULT_PATH.resolve())
+        ):
+            errors.append(
+                "CLAUDE_FOLDER_NAME must not escape OBSIDIAN_VAULT_PATH"
+            )
     
     if errors:
         raise ValueError(

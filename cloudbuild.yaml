@@ -21,7 +21,6 @@ steps:
       - 'us-central1'
       - '--platform'
       - 'managed'
-      - '--allow-unauthenticated'
 
 images:
   - 'gcr.io/$PROJECT_ID/slack-obsidian-brain-dump'
