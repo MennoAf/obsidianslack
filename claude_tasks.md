@@ -300,7 +300,7 @@ if event.get('subtype') is not None:
 
 ---
 
-### 2.6 Add event deduplication (`main.py`)
+### 2.6 ~~Add event deduplication (`main.py`)~~ ✅ COMPLETED
 
 **Why:** Synchronous processing means Slack retries (3s timeout) create duplicate notes.
 

@@ -7,6 +7,7 @@ format them into Obsidian notes.
 """
 import logging
 import sys
+import threading
 from flask import Flask, request, jsonify
 import config
 from slack_handler import SlackHandler
@@ -23,6 +24,31 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Event deduplication tracking
+_processed_events = set()
+_events_lock = threading.Lock()
+
+
+def _is_duplicate(event_id: str) -> bool:
+    """
+    Check if an event has already been processed.
+
+    Args:
+        event_id: Unique event identifier from Slack
+
+    Returns:
+        True if event was already processed, False otherwise
+    """
+    with _events_lock:
+        if event_id in _processed_events:
+            return True
+        _processed_events.add(event_id)
+        # Prevent unbounded memory growth
+        if len(_processed_events) > 10000:
+            _processed_events.clear()
+        return False
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -56,14 +82,20 @@ def slack_events():
     if data.get('type') == 'url_verification':
         logger.info("Handling URL verification challenge")
         return jsonify({'challenge': data.get('challenge', '')})
-    
-    # Handle event
+
+    # 4. Check for duplicate events (Slack retries)
+    event_id = data.get('event_id')
+    if event_id and _is_duplicate(event_id):
+        logger.info(f"Skipping duplicate event: {event_id}")
+        return jsonify({'status': 'ok'}), 200
+
+    # 5. Handle event
     if data.get('type') == 'event_callback':
         try:
             process_slack_event(data)
         except Exception as e:
             logger.error(f"Error processing event: {e}", exc_info=True)
-    
+
     # Always return 200 OK quickly to avoid Slack retries
     return jsonify({'status': 'ok'}), 200
 
