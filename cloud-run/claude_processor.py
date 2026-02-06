@@ -109,27 +109,47 @@ class ClaudeProcessor:
     
     def _extract_json_from_markdown(self, text: str) -> Optional[str]:
         """
-        Extract JSON from markdown code blocks.
-        
+        Extract JSON from markdown code blocks or raw text.
+        Uses proper brace matching to handle nested JSON objects.
+
         Args:
             text: Text potentially containing JSON in markdown
-            
+
         Returns:
             JSON string or None
         """
         import re
-        # Try to find JSON in code blocks
-        pattern = r'```(?:json)?\s*(\{[\s\S]*?\})\s*```'
-        match = re.search(pattern, text)
-        if match:
-            return match.group(1)
-        
-        # Try to find raw JSON
-        pattern = r'(\{[\s\S]*\})'
-        match = re.search(pattern, text)
-        if match:
-            return match.group(1)
-        
+
+        # Try code-fenced JSON first
+        fence_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?\s*```', text, re.DOTALL)
+        if fence_match:
+            try:
+                # Validate it's actually JSON before returning
+                json.loads(fence_match.group(1))
+                return fence_match.group(1)
+            except json.JSONDecodeError:
+                pass
+
+        # Find all { positions and try parsing from each using proper brace matching
+        for i, char in enumerate(text):
+            if char == '{':
+                # Try to find the matching } by counting brace depth
+                depth = 0
+                for j in range(i, len(text)):
+                    if text[j] == '{':
+                        depth += 1
+                    elif text[j] == '}':
+                        depth -= 1
+                        if depth == 0:
+                            # Found matching closing brace
+                            try:
+                                candidate = text[i:j+1]
+                                json.loads(candidate)  # Validate it's valid JSON
+                                return candidate
+                            except json.JSONDecodeError:
+                                # Not valid JSON, continue searching
+                                break
+
         return None
     
     def _validate_result(self, result: Dict[str, Any]) -> Dict[str, Any]:

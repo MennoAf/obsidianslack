@@ -177,7 +177,7 @@ return jsonify({'status': 'healthy'}), 200
 
 ## Priority 2: Bugs — Should Fix
 
-### 2.1 Fix JSON extraction regexes (`claude_processor.py:122-131`)
+### 2.1 ~~Fix JSON extraction regexes (`claude_processor.py:122-131`)~~ ✅ COMPLETED
 
 **Problem 1 — Line 122:** Non-greedy `*?` stops at the first `}`, breaking on nested JSON:
 ```python
