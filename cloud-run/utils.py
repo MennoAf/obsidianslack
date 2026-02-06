@@ -242,15 +242,22 @@ def format_tags_for_frontmatter(tags: List[str]) -> str:
 def parse_slack_timestamp(ts: str) -> datetime:
     """
     Parse Slack timestamp to datetime.
-    
+
     Args:
         ts: Slack timestamp string (e.g., '1234567890.123456')
-        
+
     Returns:
         Datetime object
+
+    Raises:
+        ValueError: If timestamp is not a valid float
     """
     # Slack timestamps are Unix timestamps with microseconds
-    timestamp_float = float(ts)
+    try:
+        timestamp_float = float(ts)
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Invalid Slack timestamp format: '{ts}'. Expected float string.") from e
+
     return datetime.fromtimestamp(timestamp_float, tz=pytz.utc)
 
 

@@ -420,7 +420,7 @@ def _append_reply_to_parent(self, parent_filename, reply_line):
 
 Change `--timeout 0` to `--timeout 120` (or similar).
 
-### 3.2 Fix `parse_slack_timestamp` error handling (`utils.py:236-248`)
+### 3.2 ~~Fix `parse_slack_timestamp` error handling (`utils.py:236-248`)~~ ✅ COMPLETED
 
 Wrap `float(ts)` in try/except, return `None` or raise a clear error on invalid input.
 
