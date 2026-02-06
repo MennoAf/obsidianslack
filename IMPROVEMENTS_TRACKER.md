@@ -112,23 +112,42 @@ keywords:
 ---
 
 ### 2.3: Jinja2 Note Templates
-**Status:** 🔲 TODO
+**Status:** ✅ COMPLETED (2026-02-06)
 **Priority:** MEDIUM
 **Effort:** ~4 hours
 **Impact:** HIGH - Full note structure customization
 
 **Goal:** Replace hardcoded note structure with Jinja2 templates
 
-**Implementation:**
-1. Create `cloud-run/templates/note_template.md.j2`
-2. Add `jinja2` to requirements.txt
-3. Update `obsidian_writer.py` to use template rendering
-4. Support multiple template types
+**What was changed:**
+- Created `cloud-run/templates/note_template.md.j2` with full note structure
+- Added Jinja2 template engine setup to `obsidian_writer.py`
+- Added `jinja2==3.1.4` to `requirements.txt`
+- Environment variable support: `NOTE_TEMPLATE` and `NOTE_TEMPLATE_DIR`
+- Graceful fallback to original methods if template missing/broken
+- Template supports all fields: frontmatter, content, tasks, URLs, replies
+
+**How it works now:**
+```jinja2
+# Edit cloud-run/templates/note_template.md.j2
+---
+created: {{ created }}
+title: {{ title }}
+{# Customize structure, add fields, change formatting #}
+{% if has_tasks %}
+## Tasks
+{%- for task in tasks %}
+- [ ] {{ task.task }}
+{%- endfor %}
+{% endif %}
+```
 
 **Benefits:**
-- Users can customize entire note structure
-- Different templates for different categories
-- Preview changes easily
+- ✅ Users can customize entire note structure
+- ✅ Can create multiple template types
+- ✅ Easy to preview changes (just edit .md.j2 file)
+- ✅ Full control over frontmatter and content sections
+- ✅ Graceful error handling with fallback
 
 ---
 
@@ -145,12 +164,36 @@ keywords:
 ---
 
 ### 3.1: Customization Documentation
-**Status:** 🔲 TODO
+**Status:** ✅ COMPLETED (2026-02-06)
 **Priority:** MEDIUM
 **Effort:** ~2 hours
 **Impact:** MEDIUM - Helps users adopt changes
 
 **Goal:** Create `CUSTOMIZATION.md` guide
+
+**What was created:**
+- Comprehensive `CUSTOMIZATION.md` (500+ lines)
+- Table of contents and organized sections
+- Detailed guides for all three customization layers
+- Common examples (work-focused, learning, developer setups)
+- Troubleshooting section
+- Environment variable reference
+- Best practices and tips
+
+**Sections included:**
+1. Overview of customization options
+2. How to customize Claude prompts (with examples)
+3. How to customize tag rules (with YAML examples)
+4. How to customize note templates (with Jinja2 examples)
+5. Environment variable reference
+6. Common customization examples (3 complete setups)
+7. Troubleshooting guide
+
+**Benefits:**
+- ✅ Users have complete reference for customization
+- ✅ Copy-paste examples for common scenarios
+- ✅ Troubleshooting helps debug issues
+- ✅ Lowers barrier to entry for non-programmers
 
 ---
 
@@ -177,27 +220,31 @@ keywords:
 | Category | Total | Completed | Remaining |
 |----------|-------|-----------|-----------|
 | Phase 1 (Critical) | 3 | 3 | 0 |
-| Phase 2 (Nice to Have) | 3 | 0 | 3 |
-| **Total** | **6** | **3** | **3** |
+| Phase 2 (Nice to Have) | 3 | 2 | 1 |
+| **Total** | **6** | **5** | **1** |
 
-**Completion:** 50% (3/6)
+**Completion:** 83% (5/6)
 
 ---
 
 ## 🔄 For Next Agent
 
 **Current state:**
-- ✅ Cross-platform file locking implemented
+- ✅ Cross-platform file locking implemented (1.1)
 - ✅ All Priority 1, 2, 3 bug fixes complete (see `claude_tasks.md`)
 - ✅ External prompt template implemented (2.1)
 - ✅ YAML tag rules implemented (2.2)
-- ✅ Phase 1 (Critical) improvements: 100% complete
+- ✅ Jinja2 note templates implemented (2.3)
+- ✅ Customization documentation written (3.1)
+- ✅ Phase 1 (Critical) improvements: 100% complete (3/3)
+- ✅ Phase 2 (Nice to Have): 67% complete (2/3)
+- ✅ **Full customization layer complete** - users can customize prompts, tags, and note templates
 - ✅ Project works on all platforms
 - ✅ Clean git history with atomic commits
 
 **Next recommended task:**
-1. Implement Jinja2 note templates (2.3) - Completes full customization layer
-2. OR write customization documentation (3.1) - Help users adopt new features
+1. Plugin system (2.4) - Advanced extensibility for custom processing hooks
+2. OR Development setup guide (3.2) - Help developers contribute
 
 **How to pick up:**
 1. Read this file to see what's done

@@ -2,10 +2,12 @@
 Obsidian note generation and file writing.
 """
 import logging
+import os
 from filelock import FileLock
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 import config
 from utils import (
     generate_filename,
@@ -21,12 +23,47 @@ logger = logging.getLogger(__name__)
 
 class ObsidianWriter:
     """Generate and write Obsidian notes."""
-    
+
     def __init__(self):
         """Initialize the Obsidian writer."""
         self.tag_generator = TagGenerator()
         self.vault_path = config.CLAUDE_FOLDER_PATH
-    
+        self.template_env = None
+        self.use_templates = self._setup_template_engine()
+
+    def _setup_template_engine(self) -> bool:
+        """
+        Set up Jinja2 template environment.
+
+        Returns:
+            True if templates loaded successfully, False to use fallback
+        """
+        # Determine template directory
+        template_dir = Path(__file__).parent / 'templates'
+
+        # Allow environment variable override
+        env_dir = os.getenv('NOTE_TEMPLATE_DIR')
+        if env_dir:
+            template_dir = Path(env_dir)
+
+        if not template_dir.exists():
+            logger.warning(f"Template directory not found: {template_dir}")
+            logger.info("Using fallback note generation")
+            return False
+
+        try:
+            self.template_env = Environment(
+                loader=FileSystemLoader(str(template_dir)),
+                trim_blocks=True,
+                lstrip_blocks=True
+            )
+            logger.info(f"✓ Loaded Jinja2 templates from: {template_dir}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to setup template engine: {e}")
+            logger.info("Using fallback note generation")
+            return False
+
     def create_note(
         self,
         processed_data: Dict[str, Any],
@@ -69,32 +106,49 @@ class ObsidianWriter:
             processed_data['has_tasks']
         )
         
-        # Build frontmatter
-        frontmatter = self._build_frontmatter(
-            title=processed_data['title'],
-            timestamp=timestamp,
-            tags=tags,
-            category=processed_data['category'],
-            source_domain=source_domain,
-            slack_ts=slack_message.get('ts'),
-            slack_thread_ts=slack_message.get('thread_ts'),
-            priority=priority,
-            parent_note=parent_note_filename
-        )
-        
-        # Build content
-        content = self._build_content(
-            title=processed_data['title'],
-            summary=processed_data['summary'],
-            content=processed_data['content'],
-            has_tasks=processed_data['has_tasks'],
-            tasks=processed_data['tasks'],
-            key_urls=processed_data['key_urls'],
-            parent_note=parent_note_filename
-        )
-        
-        # Combine frontmatter and content
-        full_note = frontmatter + "\n" + content
+        # Build note using Jinja2 template or fallback
+        if self.use_templates:
+            full_note = self._render_note_from_template(
+                title=processed_data['title'],
+                timestamp=timestamp,
+                tags=tags,
+                category=processed_data['category'],
+                source_domain=source_domain,
+                slack_ts=slack_message.get('ts'),
+                slack_thread_ts=slack_message.get('thread_ts'),
+                priority=priority,
+                parent_note=parent_note_filename,
+                summary=processed_data['summary'],
+                content=processed_data['content'],
+                has_tasks=processed_data['has_tasks'],
+                tasks=processed_data['tasks'],
+                key_urls=processed_data['key_urls']
+            )
+        else:
+            # Fallback to original method
+            frontmatter = self._build_frontmatter(
+                title=processed_data['title'],
+                timestamp=timestamp,
+                tags=tags,
+                category=processed_data['category'],
+                source_domain=source_domain,
+                slack_ts=slack_message.get('ts'),
+                slack_thread_ts=slack_message.get('thread_ts'),
+                priority=priority,
+                parent_note=parent_note_filename
+            )
+
+            content = self._build_content(
+                title=processed_data['title'],
+                summary=processed_data['summary'],
+                content=processed_data['content'],
+                has_tasks=processed_data['has_tasks'],
+                tasks=processed_data['tasks'],
+                key_urls=processed_data['key_urls'],
+                parent_note=parent_note_filename
+            )
+
+            full_note = frontmatter + "\n" + content
         
         # Determine where to save (inbox folder)
         filepath = self.vault_path / 'inbox' / filename
@@ -112,7 +166,82 @@ class ObsidianWriter:
             'filepath': str(filepath),
             'filename': filename
         }
-    
+
+    def _render_note_from_template(
+        self,
+        title: str,
+        timestamp: datetime,
+        tags: list,
+        category: str,
+        source_domain: Optional[str],
+        slack_ts: str,
+        slack_thread_ts: Optional[str],
+        priority: str,
+        parent_note: Optional[str],
+        summary: str,
+        content: str,
+        has_tasks: bool,
+        tasks: list,
+        key_urls: list
+    ) -> str:
+        """
+        Render note using Jinja2 template.
+
+        Returns:
+            Rendered note content
+        """
+        try:
+            # Get template name from env var or use default
+            template_name = os.getenv('NOTE_TEMPLATE', 'note_template.md.j2')
+            template = self.template_env.get_template(template_name)
+
+            # Prepare parent note name (remove .md extension for wikilink)
+            parent_note_name = None
+            if parent_note:
+                parent_note_name = parent_note.replace('.md', '')
+
+            # Render template
+            return template.render(
+                created=format_timestamp(timestamp),
+                title=sanitize_for_yaml(title),
+                tags=tags,
+                category=sanitize_for_yaml(category),
+                source_domain=sanitize_for_yaml(source_domain) if source_domain else None,
+                slack_ts=sanitize_for_yaml(str(slack_ts)),
+                slack_thread_ts=sanitize_for_yaml(str(slack_thread_ts)) if slack_thread_ts else None,
+                priority=sanitize_for_yaml(str(priority)),
+                parent_note=parent_note_name,
+                summary=summary,
+                content=content,
+                has_tasks=has_tasks,
+                tasks=tasks,
+                key_urls=key_urls
+            )
+        except TemplateNotFound as e:
+            logger.error(f"Template not found: {e}. Falling back to default.")
+            # Fall back to original methods
+            self.use_templates = False
+            frontmatter = self._build_frontmatter(
+                title, timestamp, tags, category, source_domain,
+                slack_ts, slack_thread_ts, priority, parent_note
+            )
+            content_section = self._build_content(
+                title, summary, content, has_tasks, tasks, key_urls, parent_note
+            )
+            return frontmatter + "\n" + content_section
+        except Exception as e:
+            logger.error(f"Error rendering template: {e}. Falling back to default.")
+            # Fall back to original methods
+            self.use_templates = False
+            frontmatter = self._build_frontmatter(
+                title, timestamp, tags, category, source_domain,
+                slack_ts, slack_thread_ts, priority, parent_note
+            )
+            content_section = self._build_content(
+                title, summary, content, has_tasks, tasks, key_urls, parent_note
+            )
+            return frontmatter + "\n" + content_section
+
     def _build_frontmatter(
         self,
         title: str,

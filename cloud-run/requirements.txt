@@ -12,6 +12,7 @@ pytz==2024.2
 requests==2.32.3
 filelock==3.13.1  # Cross-platform file locking
 pyyaml==6.0.2  # YAML configuration parsing
+jinja2==3.1.4  # Template engine for note generation
 
 # GitHub sync
 PyGithub==2.1.1

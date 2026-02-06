@@ -1,0 +1,57 @@
+{# Obsidian Note Template for ObsidianSlack #}
+{# This template generates markdown notes with YAML frontmatter #}
+{# Customize this file to change how your notes are structured #}
+---
+created: {{ created }}
+title: {{ title }}
+tags:
+{%- for tag in tags %}
+  - {{ tag }}
+{%- endfor %}
+category: {{ category }}
+source: slack
+{%- if source_domain %}
+source_domain: {{ source_domain }}
+{%- endif %}
+slack_ts: {{ slack_ts }}
+{%- if slack_thread_ts %}
+slack_thread_ts: {{ slack_thread_ts }}
+{%- endif %}
+status: unprocessed
+priority: {{ priority }}
+{%- if parent_note %}
+reply_to: "[[{{ parent_note }}]]"
+{%- endif %}
+---
+
+# {{ title }}
+{% if parent_note %}
+
+**In response to:** [[{{ parent_note }}]]
+{%- endif %}
+{% if summary %}
+
+## Summary
+{{ summary }}
+{%- endif %}
+
+## Content
+{{ content }}
+{%- if has_tasks and tasks %}
+
+## Tasks
+{%- for task_obj in tasks %}
+{%- if task_obj.urgency == 'high' %}
+- [ ] 🔥 {{ task_obj.task }}
+{%- else %}
+- [ ] {{ task_obj.task }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- if key_urls %}
+
+## Key References
+{%- for url_obj in key_urls %}
+- [{{ url_obj.description or url_obj.url }}]({{ url_obj.url }})
+{%- endfor %}
+{%- endif %}
