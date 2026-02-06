@@ -2,6 +2,7 @@
 Tag generation logic for Slack-Obsidian Brain Dump application.
 """
 from typing import List, Set
+import re
 import config
 from utils import extract_urls, extract_domain, extract_code_blocks
 
@@ -75,13 +76,7 @@ class TagGenerator:
                 tags.update(self.tag_rules['domains'][domain])
             else:
                 # Generate generic source tag from domain
-                clean_domain = (
-                    domain.replace('.com', '')
-                    .replace('.org', '')
-                    .replace('.io', '')
-                    .replace('.net', '')
-                    .replace('www.', '')
-                )
+                clean_domain = self._clean_domain(domain)
                 tags.add(f'source/{clean_domain}')
         
         return tags
@@ -153,8 +148,25 @@ class TagGenerator:
         # Check for lists (bullet points or numbered)
         if re_check_list(text):
             tags.update(self.tag_rules['content_types']['contains_list'])
-        
+
         return tags
+
+    def _clean_domain(self, domain: str) -> str:
+        """
+        Clean a domain name by removing common TLDs and www prefix.
+        Only strips TLDs from the end to avoid mangling domains like 'common.org'.
+
+        Args:
+            domain: Domain name to clean
+
+        Returns:
+            Cleaned domain name
+        """
+        # Remove www. prefix
+        domain = re.sub(r'^www\.', '', domain)
+        # Remove common TLDs from the end only
+        domain = re.sub(r'\.(com|org|io|net|dev|co|ai|edu|gov)$', '', domain)
+        return domain
 
 
 def re_check_list(text: str) -> bool:

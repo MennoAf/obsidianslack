@@ -342,7 +342,7 @@ response_text = response.content[0].text
 
 ---
 
-### 2.8 Fix domain cleaning (`tag_generator.py:78-84`)
+### 2.8 ~~Fix domain cleaning (`tag_generator.py:78-84`)~~ ✅ COMPLETED
 
 **Why:** Naive `.replace('.com', '')` mangles domains like `common.community.com` → `common.munity`.
 
