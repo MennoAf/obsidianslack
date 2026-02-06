@@ -29,7 +29,7 @@ config.CLAUDE_FOLDER_PATH = test_vault / '40_Claude'
 print("\nTest 1: Component initialization")
 writer = ObsidianWriter()
 tagger = TagGenerator()
-plugin_loader = PluginLoader('cloud-run/plugins')
+plugin_loader = PluginLoader('tests/fixtures')
 plugins = plugin_loader.discover_and_load()
 print(f"✓ Components initialized ({len(plugins)} plugins loaded)")
 

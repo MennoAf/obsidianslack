@@ -45,7 +45,7 @@ print("✓ Metadata construction present")
 # Test 5: Verify plugin loader can actually load plugins
 print("\nTest 5: Plugin loader functionality")
 from plugins.plugin_loader import PluginLoader
-loader = PluginLoader('cloud-run/plugins')
+loader = PluginLoader('tests/fixtures')
 plugins = loader.discover_and_load()
 assert len(plugins) == 1, f"Expected 1 test plugin, got {len(plugins)}"
 print(f"✓ Plugin loader works ({len(plugins)} plugin loaded)")

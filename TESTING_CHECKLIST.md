@@ -41,6 +41,7 @@ Testing checklist: [X/12] complete
 - [ ] Install dependencies: `pip install -r cloud-run/requirements.txt`
 - [ ] Verify all packages installed (check for pyyaml, jinja2, filelock)
 - [ ] Create test `.env` file with dummy values
+- [ ] Ensure that all venv files are ignored by git
 
 ### Expected Results
 - All dependencies install without errors

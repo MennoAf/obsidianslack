@@ -5,7 +5,7 @@ sys.path.insert(0, 'cloud-run')
 # Test 1: Plugin loading
 print("Test 1: Test plugin loading")
 from plugins.plugin_loader import PluginLoader
-loader = PluginLoader('cloud-run/plugins')
+loader = PluginLoader('tests/fixtures')
 plugins = loader.discover_and_load()
 assert len(plugins) == 1, f"Expected 1 plugin, got {len(plugins)}"
 assert plugins[0].name == 'TestPlugin'
