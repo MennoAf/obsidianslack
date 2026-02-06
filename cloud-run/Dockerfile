@@ -33,4 +33,4 @@ RUN useradd -m appuser
 USER appuser
 
 # Run the application
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 120 main:app

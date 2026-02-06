@@ -416,7 +416,7 @@ def _append_reply_to_parent(self, parent_filename, reply_line):
 
 ## Priority 3: Operational — Nice to Fix
 
-### 3.1 Set gunicorn timeout (`Dockerfile:32`)
+### 3.1 ~~Set gunicorn timeout (`Dockerfile:32`)~~ ✅ COMPLETED
 
 Change `--timeout 0` to `--timeout 120` (or similar).
 
