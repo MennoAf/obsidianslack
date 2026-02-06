@@ -424,7 +424,7 @@ Change `--timeout 0` to `--timeout 120` (or similar).
 
 Wrap `float(ts)` in try/except, return `None` or raise a clear error on invalid input.
 
-### 3.3 Fix filename collision / silent overwrite (`utils.py:44-74`, `obsidian_writer.py:262`)
+### 3.3 ~~Fix filename collision / silent overwrite (`utils.py:44-74`, `obsidian_writer.py:262`)~~ ✅ COMPLETED
 
 In `generate_filename` or `_write_file`, check if the file already exists and append a counter (e.g., `_2`, `_3`) if so.
 

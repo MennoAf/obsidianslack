@@ -252,14 +252,28 @@ class ObsidianWriter:
     
     def _write_file(self, filepath: Path, content: str):
         """
-        Write content to a file.
-        
+        Write content to a file, handling filename collisions.
+
         Args:
             filepath: Path to write to
             content: Content to write
         """
         try:
             filepath.parent.mkdir(parents=True, exist_ok=True)
+
+            # Check for filename collision
+            original_filepath = filepath
+            counter = 2
+            while filepath.exists():
+                # Append counter before extension
+                stem = original_filepath.stem
+                suffix = original_filepath.suffix
+                filepath = original_filepath.parent / f"{stem}_{counter}{suffix}"
+                counter += 1
+
+            if filepath != original_filepath:
+                logger.warning(f"Filename collision detected. Writing to {filepath.name} instead of {original_filepath.name}")
+
             filepath.write_text(content, encoding='utf-8')
             logger.info(f"Wrote file: {filepath}")
         except Exception as e:
