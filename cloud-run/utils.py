@@ -267,16 +267,27 @@ def is_thread_reply(message: dict) -> bool:
 def sanitize_for_yaml(value: str) -> str:
     """
     Sanitize a string for safe inclusion in YAML frontmatter.
-    
+
     Args:
         value: String to sanitize
-        
+
     Returns:
         Sanitized string
     """
-    # If the value contains special YAML characters, quote it
-    if any(char in value for char in [':', '#', '-', '[', ']', '{', '}', '|', '>', '*', '&', '!']):
-        # Escape internal quotes
+    if not isinstance(value, str):
+        value = str(value)
+
+    # Always quote if contains newlines, special chars, or is empty
+    special = [':', '#', '-', '[', ']', '{', '}', '|', '>', '*', '&', '!', '%', '?', '\n', '\r']
+
+    if any(char in value for char in special) or not value.strip():
+        # Escape backslashes first (must be done before other escapes)
+        value = value.replace('\\', '\\\\')
+        # Escape quotes
         value = value.replace('"', '\\"')
+        # Escape newlines
+        value = value.replace('\n', '\\n')
+        value = value.replace('\r', '\\r')
         return f'"{value}"'
+
     return value

@@ -246,7 +246,7 @@ Import `sanitize_for_yaml` from `utils` if not already imported.
 
 ---
 
-### 2.3 Fix `sanitize_for_yaml` to handle newlines and backslashes (`utils.py:267-282`)
+### 2.3 ~~Fix `sanitize_for_yaml` to handle newlines and backslashes (`utils.py:267-282`)~~ ✅ COMPLETED
 
 **Why:** Newlines bypass the special character check. Backslashes aren't escaped.
 
