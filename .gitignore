@@ -1,9 +1,11 @@
 # Environment & secrets
 .env
+.env.test
 env.yaml
 
 # Python
 venv/
+venv-test/
 __pycache__/
 *.pyc
 *.pyo
