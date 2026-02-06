@@ -444,7 +444,7 @@ Use a digest-pinned image for reproducibility: `python:3.11-slim@sha256:<hash>`.
 
 `import re` and `from utils import truncate_text` are inside methods. Move to the top of the file so import errors surface at startup.
 
-### 3.8 Add rate limiting / retry logic for Claude API (`claude_processor.py:67`)
+### 3.8 ~~Add rate limiting / retry logic for Claude API (`claude_processor.py:67`)~~ ✅ COMPLETED
 
 No app-level guard against API cost explosion if Slack channel gets flooded. Consider a simple token bucket or queue.
 

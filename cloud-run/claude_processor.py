@@ -4,6 +4,8 @@ Claude API integration for processing Slack messages.
 import json
 import logging
 import re
+import time
+import threading
 from typing import Dict, Any, Optional
 from anthropic import Anthropic
 import config
@@ -14,13 +16,47 @@ logger = logging.getLogger(__name__)
 
 class ClaudeProcessor:
     """Process Slack messages using Claude API."""
-    
+
+    # Rate limiting: max requests per time window
+    MAX_REQUESTS_PER_MINUTE = 60
+    RATE_LIMIT_WINDOW = 60  # seconds
+
     def __init__(self):
         """Initialize Claude API client."""
         self.client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
         self.model = config.CLAUDE_MODEL
         self.max_tokens = config.MAX_TOKENS
-    
+
+        # Rate limiting tracking
+        self._request_times = []
+        self._rate_limit_lock = threading.Lock()
+
+    def _check_rate_limit(self) -> bool:
+        """
+        Check if we're within rate limits and track request.
+
+        Returns:
+            True if request is allowed, False if rate limit exceeded
+        """
+        with self._rate_limit_lock:
+            current_time = time.time()
+
+            # Remove requests outside the time window
+            cutoff_time = current_time - self.RATE_LIMIT_WINDOW
+            self._request_times = [t for t in self._request_times if t > cutoff_time]
+
+            # Check if we're at the limit
+            if len(self._request_times) >= self.MAX_REQUESTS_PER_MINUTE:
+                logger.warning(
+                    f"Rate limit exceeded: {len(self._request_times)} requests in last "
+                    f"{self.RATE_LIMIT_WINDOW} seconds (max: {self.MAX_REQUESTS_PER_MINUTE})"
+                )
+                return False
+
+            # Track this request
+            self._request_times.append(current_time)
+            return True
+
     def process_message(
         self,
         message_text: str,
@@ -47,6 +83,11 @@ class ClaudeProcessor:
                 - is_question: Whether it's a question
                 - detected_urgency: Urgency level
         """
+        # Check rate limit before processing
+        if not self._check_rate_limit():
+            logger.error("Rate limit exceeded, using fallback result")
+            return self._create_fallback_result(message_text)
+
         # Extract URLs for context
         urls = extract_urls(message_text)
         urls_context = "\n".join(urls) if urls else "None"
