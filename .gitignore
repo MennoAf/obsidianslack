@@ -14,6 +14,9 @@ build/
 # Application logs
 brain_dump.log
 
+# File locking
+*.lock
+
 # OS
 .DS_Store
 Thumbs.db

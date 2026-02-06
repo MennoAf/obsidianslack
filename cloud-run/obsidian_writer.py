@@ -2,7 +2,7 @@
 Obsidian note generation and file writing.
 """
 import logging
-import fcntl
+from filelock import FileLock
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -307,42 +307,36 @@ class ObsidianWriter:
             return
         
         try:
-            # Use file locking to prevent race conditions
-            with open(parent_path, 'r+', encoding='utf-8') as f:
-                # Acquire exclusive lock
-                fcntl.flock(f, fcntl.LOCK_EX)
-                try:
-                    # Read existing content
-                    content = f.read()
+            # Use cross-platform file locking to prevent race conditions
+            lock_path = f"{parent_path}.lock"
+            lock = FileLock(lock_path, timeout=10)
 
-                    # Add reply link
-                    reply_name = reply_filename.replace('.md', '')
-                    reply_line = (
-                        f"- [[{reply_name}]] - "
-                        f"*{format_timestamp(timestamp)}*\n"
-                    )
+            with lock:
+                # Read existing content
+                content = parent_path.read_text(encoding='utf-8')
 
-                    # Find or create Replies section and insert reply
-                    replies_header = "## Replies\n"
-                    if replies_header in content:
-                        # Find position right after "## Replies\n"
-                        pos = content.index(replies_header) + len(replies_header)
-                        # Insert reply at that position
-                        content = content[:pos] + reply_line + content[pos:]
-                    else:
-                        # Create Replies section at end
-                        content += "\n\n" + replies_header + reply_line
+                # Add reply link
+                reply_name = reply_filename.replace('.md', '')
+                reply_line = (
+                    f"- [[{reply_name}]] - "
+                    f"*{format_timestamp(timestamp)}*\n"
+                )
 
-                    # Write back
-                    f.seek(0)
-                    f.write(content)
-                    f.truncate()
+                # Find or create Replies section and insert reply
+                replies_header = "## Replies\n"
+                if replies_header in content:
+                    # Find position right after "## Replies\n"
+                    pos = content.index(replies_header) + len(replies_header)
+                    # Insert reply at that position
+                    content = content[:pos] + reply_line + content[pos:]
+                else:
+                    # Create Replies section at end
+                    content += "\n\n" + replies_header + reply_line
 
-                    logger.info(f"Updated parent note with reply: {parent_filename}")
+                # Write back
+                parent_path.write_text(content, encoding='utf-8')
 
-                finally:
-                    # Release lock
-                    fcntl.flock(f, fcntl.LOCK_UN)
+                logger.info(f"Updated parent note with reply: {parent_filename}")
 
         except Exception as e:
             logger.error(f"Error updating parent note {parent_filename}: {e}")

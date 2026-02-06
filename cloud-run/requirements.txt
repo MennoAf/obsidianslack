@@ -10,6 +10,7 @@ flask==3.1.0
 python-dateutil==2.9.0
 pytz==2024.2
 requests==2.32.3
+filelock==3.13.1  # Cross-platform file locking
 
 # GitHub sync
 PyGithub==2.1.1
