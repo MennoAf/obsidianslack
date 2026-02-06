@@ -46,44 +46,68 @@ with lock:
 ## 📋 TODO - Phase 1 (Quick Wins)
 
 ### 2.1: External Prompt Template
-**Status:** 🔲 TODO
+**Status:** ✅ COMPLETED (2026-02-06)
 **Priority:** HIGH
 **Effort:** ~3 hours
 **Impact:** HIGH - Biggest customization need
 
 **Goal:** Move 100+ line prompt from `config.py` to external file
 
-**Implementation:**
-1. Create `cloud-run/templates/categorization_prompt.txt`
-2. Add template loading function to `config.py`
-3. Support env var override: `PROMPT_TEMPLATE`
-4. Keep current prompt as default
+**What was changed:**
+- Created `cloud-run/templates/categorization_prompt.txt` with default prompt
+- Added `load_prompt_template()` function to `config.py`
+- Environment variable support: `PROMPT_TEMPLATE` to override template file
+- Kept current prompt as fallback default (`_DEFAULT_CATEGORIZATION_PROMPT`)
+
+**How it works now:**
+```python
+# Custom template via environment variable
+PROMPT_TEMPLATE=/path/to/custom_prompt.txt
+
+# Or edit the default template file directly
+cloud-run/templates/categorization_prompt.txt
+```
 
 **Benefits:**
-- Users can customize without touching code
-- Version control different prompts
-- A/B testing of prompts
+- ✅ Users can customize without touching code
+- ✅ Version control different prompts
+- ✅ A/B testing of prompts
+- ✅ Graceful fallback if file missing
 
 ---
 
 ### 2.2: YAML Tag Rules
-**Status:** 🔲 TODO
+**Status:** ✅ COMPLETED (2026-02-06)
 **Priority:** MEDIUM
 **Effort:** ~2 hours
 **Impact:** MEDIUM - Remaining customization needs
 
 **Goal:** Move hardcoded tag rules to `config/tag_rules.yaml`
 
-**Implementation:**
-1. Create `cloud-run/config/tag_rules.yaml`
-2. Add YAML loading to `config.py`
-3. Add `pyyaml` to requirements.txt
-4. Keep current rules as defaults
+**What was changed:**
+- Created `cloud-run/config/tag_rules.yaml` with all tag rules
+- Added `load_tag_rules()` function to `config.py`
+- Added `pyyaml==6.0.2` to `requirements.txt`
+- Environment variable support: `TAG_RULES_FILE` to override rules file
+- Kept current rules as fallback default (`_DEFAULT_TAG_RULES`)
+
+**How it works now:**
+```yaml
+# Edit cloud-run/config/tag_rules.yaml
+domains:
+  mycompany.com:
+    - work/internal
+    - company
+keywords:
+  urgent:
+    - priority/high
+```
 
 **Benefits:**
-- Non-programmers can add domains/keywords
-- Easier to share configurations
-- Can load different rules per deployment
+- ✅ Non-programmers can add domains/keywords
+- ✅ Easier to share configurations
+- ✅ Can load different rules per deployment
+- ✅ Well-commented YAML with examples
 
 ---
 
@@ -152,11 +176,11 @@ with lock:
 
 | Category | Total | Completed | Remaining |
 |----------|-------|-----------|-----------|
-| Phase 1 (Critical) | 3 | 1 | 2 |
+| Phase 1 (Critical) | 3 | 3 | 0 |
 | Phase 2 (Nice to Have) | 3 | 0 | 3 |
-| **Total** | **6** | **1** | **5** |
+| **Total** | **6** | **3** | **3** |
 
-**Completion:** 17% (1/6)
+**Completion:** 50% (3/6)
 
 ---
 
@@ -165,12 +189,15 @@ with lock:
 **Current state:**
 - ✅ Cross-platform file locking implemented
 - ✅ All Priority 1, 2, 3 bug fixes complete (see `claude_tasks.md`)
-- ✅ Project works on Unix systems
+- ✅ External prompt template implemented (2.1)
+- ✅ YAML tag rules implemented (2.2)
+- ✅ Phase 1 (Critical) improvements: 100% complete
+- ✅ Project works on all platforms
 - ✅ Clean git history with atomic commits
 
 **Next recommended task:**
-1. Implement external prompt template (2.1) - Highest user impact
-2. OR implement YAML tag rules (2.2) - Quick win
+1. Implement Jinja2 note templates (2.3) - Completes full customization layer
+2. OR write customization documentation (3.1) - Help users adopt new features
 
 **How to pick up:**
 1. Read this file to see what's done

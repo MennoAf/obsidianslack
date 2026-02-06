@@ -1,0 +1,304 @@
+# Tag Generation Rules for ObsidianSlack
+# Customize these rules to match your workflow and commonly used sites
+
+# Domain-based tagging
+# Maps URL domains to tags that will be added to notes containing those URLs
+domains:
+  # Developer platforms
+  github.com:
+    - dev/github
+    - code
+  stackoverflow.com:
+    - dev/stackoverflow
+    - code
+  stackexchange.com:
+    - dev/stackexchange
+    - code
+  gitlab.com:
+    - dev/gitlab
+    - code
+  bitbucket.org:
+    - dev/bitbucket
+    - code
+  npmjs.com:
+    - dev/npm
+    - code
+  pypi.org:
+    - dev/pypi
+    - code/python
+
+  # News sites
+  theverge.com:
+    - news/tech
+    - source/theverge
+  cnn.com:
+    - news/general
+    - source/cnn
+  bbc.com:
+    - news/general
+    - source/bbc
+  nytimes.com:
+    - news/general
+    - source/nytimes
+  techcrunch.com:
+    - news/tech
+    - startups
+    - source/techcrunch
+  arstechnica.com:
+    - news/tech
+    - source/arstechnica
+  wired.com:
+    - news/tech
+    - source/wired
+
+  # Social & Media
+  youtube.com:
+    - video
+    - source/youtube
+  youtu.be:
+    - video
+    - source/youtube
+  reddit.com:
+    - social/reddit
+  twitter.com:
+    - social/twitter
+  x.com:
+    - social/twitter
+  linkedin.com:
+    - social/linkedin
+    - professional
+
+  # Content platforms
+  medium.com:
+    - articles
+    - source/medium
+  substack.com:
+    - articles
+    - newsletter
+    - source/substack
+  dev.to:
+    - articles
+    - code
+    - source/devto
+
+  # Research & Academic
+  arxiv.org:
+    - research
+    - academic
+    - source/arxiv
+  scholar.google.com:
+    - research
+    - academic
+  researchgate.net:
+    - research
+    - academic
+
+  # Productivity & Collaboration
+  docs.google.com:
+    - docs
+    - collaboration
+  notion.so:
+    - docs
+    - source/notion
+  figma.com:
+    - design
+    - source/figma
+  miro.com:
+    - design
+    - collaboration
+  trello.com:
+    - project-management
+    - tasks
+  asana.com:
+    - project-management
+    - tasks
+
+  # Documentation
+  readthedocs.io:
+    - docs
+    - technical
+  docs.python.org:
+    - docs
+    - code/python
+  developer.mozilla.org:
+    - docs
+    - code/javascript
+    - web
+
+# Code language detection
+# Maps detected programming languages to tags
+code_languages:
+  python:
+    - code/python
+    - programming
+  javascript:
+    - code/javascript
+    - programming
+  typescript:
+    - code/typescript
+    - programming
+  java:
+    - code/java
+    - programming
+  c++:
+    - code/cpp
+    - programming
+  c:
+    - code/c
+    - programming
+  rust:
+    - code/rust
+    - programming
+  go:
+    - code/go
+    - programming
+  ruby:
+    - code/ruby
+    - programming
+  php:
+    - code/php
+    - programming
+  swift:
+    - code/swift
+    - programming
+  kotlin:
+    - code/kotlin
+    - programming
+  sql:
+    - code/sql
+    - database
+  bash:
+    - code/bash
+    - scripting
+  shell:
+    - code/shell
+    - scripting
+  powershell:
+    - code/powershell
+    - scripting
+  html:
+    - code/html
+    - web
+  css:
+    - code/css
+    - web
+  react:
+    - code/react
+    - frontend
+  vue:
+    - code/vue
+    - frontend
+  angular:
+    - code/angular
+    - frontend
+  django:
+    - code/django
+    - backend
+  flask:
+    - code/flask
+    - backend
+  fastapi:
+    - code/fastapi
+    - backend
+  node:
+    - code/nodejs
+    - backend
+  express:
+    - code/express
+    - backend
+
+# Keyword-based tagging
+# Maps keywords found in messages to tags
+keywords:
+  meeting:
+    - work/meeting
+  call:
+    - work/meeting
+  standup:
+    - work/meeting
+    - agile
+  sprint:
+    - work/sprint
+    - agile
+  retrospective:
+    - work/retrospective
+    - agile
+  api:
+    - dev/api
+    - technical
+  bug:
+    - dev/bug
+    - troubleshooting
+  issue:
+    - dev/bug
+    - troubleshooting
+  error:
+    - dev/bug
+    - troubleshooting
+  feature:
+    - dev/feature
+    - product
+  design:
+    - design
+    - creative
+  deadline:
+    - urgent
+    - tasks
+  review:
+    - work/review
+  documentation:
+    - docs
+    - writing
+  docs:
+    - docs
+    - writing
+  tutorial:
+    - learning
+    - education
+  course:
+    - learning
+    - education
+  research:
+    - research
+    - learning
+  architecture:
+    - dev/architecture
+    - technical
+  database:
+    - database
+    - technical
+  deployment:
+    - devops
+    - deployment
+  ci/cd:
+    - devops
+    - automation
+  testing:
+    - dev/testing
+    - quality
+  security:
+    - security
+    - technical
+  performance:
+    - performance
+    - optimization
+  refactor:
+    - dev/refactoring
+    - code-quality
+  migration:
+    - dev/migration
+    - technical
+
+# Content type detection flags
+# Tags added based on content structure
+content_types:
+  contains_code_block:
+    - code
+    - technical
+  contains_url:
+    - reference
+    - link
+  contains_question:
+    - question
+  contains_list:
+    - structured

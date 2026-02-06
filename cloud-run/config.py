@@ -4,6 +4,7 @@ Configuration and constants for Slack-Obsidian Brain Dump application.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import yaml
 
 # Load environment variables
 load_dotenv()
@@ -63,8 +64,8 @@ OBSIDIAN_SUBFOLDERS = [
 # Categories
 VALID_CATEGORIES = ["code", "news", "ideas", "tasks", "journal", "misc"]
 
-# Tag Generation Rules
-TAG_RULES = {
+# Default Tag Generation Rules (fallback if YAML file not found)
+_DEFAULT_TAG_RULES = {
     # Domain-based tagging
     # Add your commonly used domains here
     'domains': {
@@ -206,8 +207,45 @@ URGENCY_KEYWORDS = {
     ]
 }
 
-# Categorization Prompt Template
-CATEGORIZATION_PROMPT = """Analyze this Slack message and extract structured information:
+
+def load_tag_rules(config_file='config/tag_rules.yaml'):
+    """
+    Load tag rules from YAML file with fallback to defaults.
+
+    Args:
+        config_file: Path to YAML file relative to this config.py file
+
+    Returns:
+        dict: Tag rules configuration
+    """
+    config_path = Path(__file__).parent / config_file
+
+    # Allow environment variable override
+    env_path = os.getenv('TAG_RULES_FILE')
+    if env_path:
+        config_path = Path(env_path)
+
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                rules = yaml.safe_load(f)
+                print(f"✓ Loaded tag rules from: {config_path}")
+                return rules
+        except Exception as e:
+            print(f"⚠ Failed to load tag rules from {config_path}: {e}")
+            print("  Using default tag rules")
+    else:
+        print(f"ℹ Tag rules file not found: {config_path}")
+        print("  Using default tag rules")
+
+    return _DEFAULT_TAG_RULES
+
+
+# Load tag rules from external file (or use defaults)
+TAG_RULES = load_tag_rules()
+
+# Default Categorization Prompt Template (fallback if template file not found)
+_DEFAULT_CATEGORIZATION_PROMPT = """Analyze this Slack message and extract structured information:
 
 MESSAGE:
 {slack_message}
@@ -260,6 +298,42 @@ Example response format:
   "detected_urgency": "high"
 }}
 """
+
+
+def load_prompt_template(template_name='templates/categorization_prompt.txt'):
+    """
+    Load prompt template from file with fallback to default.
+
+    Args:
+        template_name: Path to template file relative to this config.py file
+
+    Returns:
+        str: Prompt template content
+    """
+    template_path = Path(__file__).parent / template_name
+
+    # Allow environment variable override
+    env_path = os.getenv('PROMPT_TEMPLATE')
+    if env_path:
+        template_path = Path(env_path)
+
+    if template_path.exists():
+        try:
+            content = template_path.read_text()
+            print(f"✓ Loaded prompt template from: {template_path}")
+            return content
+        except Exception as e:
+            print(f"⚠ Failed to load prompt template from {template_path}: {e}")
+            print("  Using default prompt template")
+    else:
+        print(f"ℹ Prompt template file not found: {template_path}")
+        print("  Using default prompt template")
+
+    return _DEFAULT_CATEGORIZATION_PROMPT
+
+
+# Load categorization prompt from external file (or use default)
+CATEGORIZATION_PROMPT = load_prompt_template()
 
 
 def validate_config():

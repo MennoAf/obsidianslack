@@ -1,0 +1,52 @@
+Analyze this Slack message and extract structured information:
+
+MESSAGE:
+{slack_message}
+
+THREAD CONTEXT (if reply):
+{thread_context}
+
+URLs FOUND:
+{urls_found}
+
+Provide a JSON response with:
+1. "title": A clear, concise title (3-8 words, no special chars except hyphens and spaces)
+2. "category": One of {categories}
+3. "base_tags": Array of your suggested tags (domain and code language tags will be added automatically)
+4. "has_tasks": boolean - does this contain actionable items?
+5. "tasks": array of objects with {{"task": "description", "urgency": "high/medium/low/normal"}}
+6. "summary": 1-2 sentence summary of the content
+7. "content": The original message with proper markdown formatting, preserving all code blocks, links, and formatting
+8. "key_urls": Array of important URLs mentioned (if any) with format {{"url": "...", "description": "..."}}
+9. "code_languages": Array of programming languages detected in code blocks (if any)
+10. "is_question": boolean - is this asking a question?
+11. "detected_urgency": "high", "medium", "low", or "normal" based on language used
+
+IMPORTANT RULES:
+- Do NOT summarize the content field - keep the original message verbatim
+- Preserve all code blocks with proper markdown formatting (```language)
+- Keep all URLs as clickable markdown links [text](url)
+- Maintain original formatting, line breaks, and emphasis
+- If code blocks exist, detect their language from syntax or context
+- Look for urgency indicators: deadlines, "urgent", "asap", "critical", etc.
+- Identify tasks even if not in numbered/bullet format
+
+Return ONLY valid JSON, no markdown formatting, no other text.
+
+Example response format:
+{{
+  "title": "Fix Production API Timeout",
+  "category": "tasks",
+  "base_tags": ["backend", "api", "troubleshooting"],
+  "has_tasks": true,
+  "tasks": [
+    {{"task": "Debug API connection", "urgency": "high"}},
+    {{"task": "Contact AWS support", "urgency": "high"}}
+  ],
+  "summary": "Production API experiencing timeout errors requiring immediate debugging and AWS support contact.",
+  "content": "Original message here...",
+  "key_urls": [{{"url": "https://status.aws.amazon.com", "description": "AWS Status Page"}}],
+  "code_languages": ["python"],
+  "is_question": false,
+  "detected_urgency": "high"
+}}
