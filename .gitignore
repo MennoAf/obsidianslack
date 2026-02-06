@@ -17,3 +17,7 @@ brain_dump.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code local directory
+.claude/
+
