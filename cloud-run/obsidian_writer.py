@@ -2,6 +2,7 @@
 Obsidian note generation and file writing.
 """
 import logging
+import fcntl
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -292,27 +293,39 @@ class ObsidianWriter:
             return
         
         try:
-            # Read existing content
-            content = parent_path.read_text(encoding='utf-8')
-            
-            # Check if Replies section exists
-            if "## Replies" not in content:
-                content += "\n\n## Replies\n"
-            
-            # Add reply link
-            reply_name = reply_filename.replace('.md', '')
-            reply_line = (
-                f"- [[{reply_name}]] - "
-                f"*{format_timestamp(timestamp)}*\n"
-            )
-            
-            # Append reply
-            content += reply_line
-            
-            # Write back
-            parent_path.write_text(content, encoding='utf-8')
-            logger.info(f"Updated parent note with reply: {parent_filename}")
-            
+            # Use file locking to prevent race conditions
+            with open(parent_path, 'r+', encoding='utf-8') as f:
+                # Acquire exclusive lock
+                fcntl.flock(f, fcntl.LOCK_EX)
+                try:
+                    # Read existing content
+                    content = f.read()
+
+                    # Check if Replies section exists
+                    if "## Replies" not in content:
+                        content += "\n\n## Replies\n"
+
+                    # Add reply link
+                    reply_name = reply_filename.replace('.md', '')
+                    reply_line = (
+                        f"- [[{reply_name}]] - "
+                        f"*{format_timestamp(timestamp)}*\n"
+                    )
+
+                    # Append reply
+                    content += reply_line
+
+                    # Write back
+                    f.seek(0)
+                    f.write(content)
+                    f.truncate()
+
+                    logger.info(f"Updated parent note with reply: {parent_filename}")
+
+                finally:
+                    # Release lock
+                    fcntl.flock(f, fcntl.LOCK_UN)
+
         except Exception as e:
             logger.error(f"Error updating parent note {parent_filename}: {e}")
     

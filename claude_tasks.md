@@ -379,7 +379,7 @@ FLASK_PORT = _safe_int("FLASK_PORT", 5000)
 
 ---
 
-### 2.10 Fix race condition on parent note updates (`obsidian_writer.py:296-313`)
+### 2.10 ~~Fix race condition on parent note updates (`obsidian_writer.py:296-313`)~~ ✅ COMPLETED
 
 **Why:** Concurrent read-modify-write with no locking. Two replies to the same thread = data loss.
 
