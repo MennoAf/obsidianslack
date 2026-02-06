@@ -432,7 +432,7 @@ In `generate_filename` or `_write_file`, check if the file already exists and ap
 
 `extract_code_blocks` is imported but never used. Remove it.
 
-### 3.5 Add `--service-account`, `--max-instances`, `--memory` to `cloudbuild.yaml`
+### 3.5 ~~Add `--service-account`, `--max-instances`, `--memory` to `cloudbuild.yaml`~~ ✅ COMPLETED
 
 The Cloud Run deploy command should specify resource limits and a dedicated service account.
 

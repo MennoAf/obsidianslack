@@ -21,6 +21,18 @@ steps:
       - 'us-central1'
       - '--platform'
       - 'managed'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--min-instances'
+      - '0'
+      - '--timeout'
+      - '60s'
+      - '--concurrency'
+      - '80'
 
 images:
   - 'gcr.io/$PROJECT_ID/slack-obsidian-brain-dump'
