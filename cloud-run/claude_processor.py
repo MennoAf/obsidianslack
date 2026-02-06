@@ -3,10 +3,11 @@ Claude API integration for processing Slack messages.
 """
 import json
 import logging
+import re
 from typing import Dict, Any, Optional
 from anthropic import Anthropic
 import config
-from utils import extract_urls, detect_all_code_languages
+from utils import extract_urls, detect_all_code_languages, truncate_text
 
 logger = logging.getLogger(__name__)
 
@@ -122,8 +123,6 @@ class ClaudeProcessor:
         Returns:
             JSON string or None
         """
-        import re
-
         # Try code-fenced JSON first
         fence_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?\s*```', text, re.DOTALL)
         if fence_match:
@@ -221,8 +220,6 @@ class ClaudeProcessor:
         Returns:
             Basic fallback result
         """
-        from utils import truncate_text
-        
         logger.warning("Using fallback result due to processing error")
         
         return {

@@ -440,7 +440,7 @@ The Cloud Run deploy command should specify resource limits and a dedicated serv
 
 Use a digest-pinned image for reproducibility: `python:3.11-slim@sha256:<hash>`.
 
-### 3.7 Move inline imports to module level (`claude_processor.py:120, 200`)
+### 3.7 ~~Move inline imports to module level (`claude_processor.py:120, 200`)~~ ✅ COMPLETED
 
 `import re` and `from utils import truncate_text` are inside methods. Move to the top of the file so import errors surface at startup.
 
