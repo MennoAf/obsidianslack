@@ -4,7 +4,7 @@ Tag generation logic for Slack-Obsidian Brain Dump application.
 from typing import List, Set
 import re
 import config
-from utils import extract_urls, extract_domain, extract_code_blocks
+from utils import extract_urls, extract_domain
 
 
 class TagGenerator:

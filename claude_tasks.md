@@ -428,7 +428,7 @@ Wrap `float(ts)` in try/except, return `None` or raise a clear error on invalid 
 
 In `generate_filename` or `_write_file`, check if the file already exists and append a counter (e.g., `_2`, `_3`) if so.
 
-### 3.4 Remove unused import (`tag_generator.py:6`)
+### 3.4 ~~Remove unused import (`tag_generator.py:6`)~~ ✅ COMPLETED
 
 `extract_code_blocks` is imported but never used. Remove it.
 
