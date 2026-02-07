@@ -14,10 +14,10 @@
 # ============================================================================
 
 # Path to your Obsidian vault's 40_Claude folder
-VAULT_PATH="/path/to/your/vault/40_Claude"
+VAULT_PATH="/Users/jasonbauman/Documents/Londo_/40_Claude"
 
 # GitHub repository (format: username/repo-name)
-GITHUB_REPO="yourusername/obsidian-brain-dumps"
+GITHUB_REPO="MennoAf/obsidian-brain-dumps"
 
 # Branch name
 GITHUB_BRANCH="main"
