@@ -31,6 +31,18 @@ class ObsidianWriter:
         self.template_env = None
         self.use_templates = self._setup_template_engine()
 
+        # Check if we should use GitHub sync (Cloud Run environment)
+        self.github_sync = None
+        if os.getenv('GITHUB_TOKEN') and os.getenv('GITHUB_REPO'):
+            # Cloud Run environment - use GitHub sync
+            try:
+                from github_sync import GitHubSync
+                self.github_sync = GitHubSync()
+                logger.info("✓ GitHub sync enabled for Cloud Run")
+            except Exception as e:
+                logger.error(f"Failed to initialize GitHub sync: {e}")
+                raise
+
     def _setup_template_engine(self) -> bool:
         """
         Set up Jinja2 template environment.
@@ -388,6 +400,22 @@ class ObsidianWriter:
             content: Content to write
         """
         try:
+            # Use GitHub sync if available (Cloud Run)
+            if self.github_sync:
+                folder = filepath.parent.name
+                filename = filepath.name
+                success = self.github_sync.write_note(
+                    filename=filename,
+                    content=content,
+                    folder=folder
+                )
+                if success:
+                    logger.info(f"Wrote file to GitHub: {folder}/{filename}")
+                else:
+                    raise Exception(f"Failed to write to GitHub: {folder}/{filename}")
+                return
+
+            # Local filesystem (original behavior)
             filepath.parent.mkdir(parents=True, exist_ok=True)
 
             # Check for filename collision
@@ -417,24 +445,71 @@ class ObsidianWriter:
     ):
         """
         Append a reply reference to the parent note.
-        
+
         Args:
             parent_filename: Parent note filename
             reply_filename: Reply note filename
             timestamp: Reply timestamp
         """
-        # Search for parent file in inbox and other folders
+        # Build reply content
+        reply_name = reply_filename.replace('.md', '')
+        reply_line = (
+            f"- [[{reply_name}]] - "
+            f"*{format_timestamp(timestamp)}*\n"
+        )
+        replies_header = "## Replies\n"
+
+        # Use GitHub sync if available
+        if self.github_sync:
+            # Search for parent file in all folders
+            parent_folder = None
+            for subfolder in config.OBSIDIAN_SUBFOLDERS:
+                if self.github_sync.file_exists(parent_filename, subfolder):
+                    parent_folder = subfolder
+                    break
+
+            if not parent_folder:
+                logger.warning(f"Could not find parent note in GitHub: {parent_filename}")
+                return
+
+            try:
+                # Get file path for GitHub
+                file_path = self.github_sync._safe_path(parent_folder, parent_filename)
+                existing_file = self.github_sync.repo.get_contents(file_path, ref=self.github_sync.branch)
+                content = existing_file.decoded_content.decode('utf-8')
+
+                # Add reply link
+                if replies_header in content:
+                    pos = content.index(replies_header) + len(replies_header)
+                    content = content[:pos] + reply_line + content[pos:]
+                else:
+                    content += "\n\n" + replies_header + reply_line
+
+                # Update file in GitHub
+                self.github_sync.repo.update_file(
+                    path=file_path,
+                    message=f"Add reply link to {parent_filename}",
+                    content=content,
+                    sha=existing_file.sha,
+                    branch=self.github_sync.branch
+                )
+                logger.info(f"Updated parent note in GitHub with reply: {parent_filename}")
+            except Exception as e:
+                logger.error(f"Error updating parent note in GitHub {parent_filename}: {e}")
+            return
+
+        # Local filesystem (original behavior)
         parent_path = None
         for subfolder in config.OBSIDIAN_SUBFOLDERS:
             potential_path = self.vault_path / subfolder / parent_filename
             if potential_path.exists():
                 parent_path = potential_path
                 break
-        
+
         if not parent_path:
             logger.warning(f"Could not find parent note: {parent_filename}")
             return
-        
+
         try:
             # Use cross-platform file locking to prevent race conditions
             lock_path = f"{parent_path}.lock"
@@ -445,14 +520,6 @@ class ObsidianWriter:
                 content = parent_path.read_text(encoding='utf-8')
 
                 # Add reply link
-                reply_name = reply_filename.replace('.md', '')
-                reply_line = (
-                    f"- [[{reply_name}]] - "
-                    f"*{format_timestamp(timestamp)}*\n"
-                )
-
-                # Find or create Replies section and insert reply
-                replies_header = "## Replies\n"
                 if replies_header in content:
                     # Find position right after "## Replies\n"
                     pos = content.index(replies_header) + len(replies_header)
@@ -473,19 +540,39 @@ class ObsidianWriter:
     def get_note_by_slack_ts(self, slack_ts: str) -> Optional[str]:
         """
         Find a note by its Slack timestamp.
-        
+
         Args:
             slack_ts: Slack message timestamp
-            
+
         Returns:
             Note filename or None if not found
         """
-        # Search all subfolders
+        # Use GitHub sync if available
+        if self.github_sync:
+            try:
+                for subfolder in config.OBSIDIAN_SUBFOLDERS:
+                    try:
+                        files = self.github_sync.list_files(subfolder)
+                        for filename in files:
+                            if not filename.endswith('.md'):
+                                continue
+                            file_path = self.github_sync._safe_path(subfolder, filename)
+                            file_obj = self.github_sync.repo.get_contents(file_path, ref=self.github_sync.branch)
+                            content = file_obj.decoded_content.decode('utf-8')
+                            if f"slack_ts: {slack_ts}" in content:
+                                return filename
+                    except Exception:
+                        continue
+            except Exception as e:
+                logger.error(f"Error searching GitHub for note: {e}")
+            return None
+
+        # Local filesystem (original behavior)
         for subfolder in config.OBSIDIAN_SUBFOLDERS:
             folder_path = self.vault_path / subfolder
             if not folder_path.exists():
                 continue
-            
+
             for note_path in folder_path.glob('*.md'):
                 try:
                     content = note_path.read_text(encoding='utf-8')
@@ -493,5 +580,5 @@ class ObsidianWriter:
                         return note_path.name
                 except Exception:
                     continue
-        
+
         return None
