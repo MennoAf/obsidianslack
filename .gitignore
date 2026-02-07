@@ -25,4 +25,5 @@ Thumbs.db
 
 # Claude Code local directory
 .claude/
+env.yaml
 
