@@ -120,6 +120,32 @@ def process_slack_event(event_data: dict):
     
     logger.info(f"Processing message: {event_info['message_ts']}")
 
+    # Check for grocery list items (e.g., "Buy milk")
+    import re
+    grocery_pattern = r'^buy\s+(.+)$'
+    match = re.match(grocery_pattern, event_info['text'].strip(), re.IGNORECASE)
+
+    if match:
+        item = match.group(1).strip()
+        logger.info(f"Detected grocery item: {item}")
+
+        try:
+            obsidian_writer.add_to_grocery_list(item)
+
+            # React with shopping cart emoji to confirm
+            slack_handler.add_reaction(
+                event_info['channel_id'],
+                event_info['message_ts'],
+                'shopping_trolley'  # 🛒
+            )
+
+            logger.info(f"Added '{item}' to grocery list")
+            return  # Don't process as a regular note
+
+        except Exception as e:
+            logger.error(f"Error adding to grocery list: {e}")
+            # Fall through to normal processing if grocery list fails
+
     # Call plugin hook: on_message_received
     message_metadata = {
         'user_id': event_info.get('user_id'),

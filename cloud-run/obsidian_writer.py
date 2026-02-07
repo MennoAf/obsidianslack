@@ -583,3 +583,110 @@ class ObsidianWriter:
                     continue
 
         return None
+
+    def add_to_grocery_list(self, item: str):
+        """
+        Add an item to the grocery list.
+
+        Creates the grocery list if it doesn't exist, or appends to existing list.
+
+        Args:
+            item: The item to add to the grocery list
+        """
+        from datetime import datetime
+
+        grocery_list_filename = "grocery-list.md"
+        grocery_list_folder = "inbox"
+
+        # Use GitHub sync if available
+        if self.github_sync:
+            try:
+                file_path = self.github_sync._safe_path(grocery_list_folder, grocery_list_filename)
+
+                # Try to get existing grocery list
+                try:
+                    existing_file = self.github_sync.repo.get_contents(file_path, ref=self.github_sync.branch)
+                    content = existing_file.decoded_content.decode('utf-8')
+
+                    # Append new item
+                    new_item = f"- [ ] {item}\n"
+                    updated_content = content.rstrip() + "\n" + new_item
+
+                    # Update file
+                    self.github_sync.repo.update_file(
+                        path=file_path,
+                        message=f"Add grocery item: {item}",
+                        content=updated_content,
+                        sha=existing_file.sha,
+                        branch=self.github_sync.branch
+                    )
+                    logger.info(f"Added '{item}' to existing grocery list in GitHub")
+
+                except Exception as e:
+                    if "404" in str(e):
+                        # Create new grocery list
+                        initial_content = self._create_grocery_list_template()
+                        initial_content += f"- [ ] {item}\n"
+
+                        self.github_sync.repo.create_file(
+                            path=file_path,
+                            message="Create grocery list",
+                            content=initial_content,
+                            branch=self.github_sync.branch
+                        )
+                        logger.info(f"Created new grocery list in GitHub with item: {item}")
+                    else:
+                        raise
+
+            except Exception as e:
+                logger.error(f"Error updating grocery list in GitHub: {e}")
+                raise
+            return
+
+        # Local filesystem (original behavior)
+        grocery_list_path = self.vault_path / grocery_list_folder / grocery_list_filename
+
+        try:
+            if grocery_list_path.exists():
+                # Append to existing list
+                content = grocery_list_path.read_text(encoding='utf-8')
+                new_item = f"- [ ] {item}\n"
+                updated_content = content.rstrip() + "\n" + new_item
+                grocery_list_path.write_text(updated_content, encoding='utf-8')
+                logger.info(f"Added '{item}' to existing grocery list")
+            else:
+                # Create new grocery list
+                initial_content = self._create_grocery_list_template()
+                initial_content += f"- [ ] {item}\n"
+                grocery_list_path.parent.mkdir(parents=True, exist_ok=True)
+                grocery_list_path.write_text(initial_content, encoding='utf-8')
+                logger.info(f"Created new grocery list with item: {item}")
+
+        except Exception as e:
+            logger.error(f"Error updating grocery list locally: {e}")
+            raise
+
+    def _create_grocery_list_template(self) -> str:
+        """
+        Create the initial grocery list template.
+
+        Returns:
+            Formatted grocery list template
+        """
+        from datetime import datetime
+        template = f"""---
+created: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+title: Grocery List
+tags:
+  - groceries
+  - shopping
+  - tasks
+category: tasks
+source: slack
+status: active
+---
+
+# 🛒 Grocery List
+
+"""
+        return template
