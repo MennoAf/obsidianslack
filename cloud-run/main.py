@@ -68,10 +68,18 @@ plugins = plugin_loader.discover_and_load()
 def slack_events():
     """
     Handle incoming Slack events via webhook.
-    
+
     This endpoint receives events from Slack and processes brain dump messages.
     """
-    # 1. Verify signature FIRST (uses raw body)
+    # 1. Parse JSON FIRST
+    data = request.json
+
+    # 2. Handle URL verification challenge IMMEDIATELY (before signature check)
+    if data.get('type') == 'url_verification':
+        logger.info("Handling URL verification challenge")
+        return jsonify({'challenge': data.get('challenge', '')})
+
+    # 3. Verify signature for all other requests (uses raw body)
     raw_body = request.get_data()
     timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
     signature = request.headers.get('X-Slack-Signature', '')
@@ -79,14 +87,6 @@ def slack_events():
     if not slack_handler.verify_request(raw_body.decode('utf-8'), timestamp, signature):
         logger.warning("Invalid Slack request signature")
         return jsonify({'error': 'Invalid signature'}), 403
-
-    # 2. THEN parse JSON
-    data = request.json
-
-    # 3. Handle URL verification challenge
-    if data.get('type') == 'url_verification':
-        logger.info("Handling URL verification challenge")
-        return jsonify({'challenge': data.get('challenge', '')})
 
     # 4. Check for duplicate events (Slack retries)
     event_id = data.get('event_id')
