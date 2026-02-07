@@ -15,13 +15,12 @@ from claude_processor import ClaudeProcessor
 from obsidian_writer import ObsidianWriter
 from plugins.plugin_loader import PluginLoader
 
-# Setup logging
+# Setup logging (Cloud Run only supports stdout)
 logging.basicConfig(
     level=logging.INFO if not config.DEBUG_MODE else logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('brain_dump.log')
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
