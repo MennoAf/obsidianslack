@@ -218,9 +218,11 @@ def process_slack_event(event_data: dict):
             'slack_ts': event_info['message_ts']
         }
 
-        # Read note content for plugins
-        from pathlib import Path
-        note_content = Path(result['filepath']).read_text(encoding='utf-8')
+        # Get note content (from result when using GitHub sync, or read from file)
+        note_content = result.get('content')
+        if not note_content:
+            from pathlib import Path
+            note_content = Path(result['filepath']).read_text(encoding='utf-8')
 
         plugin_loader.call_hook(
             'on_note_created',

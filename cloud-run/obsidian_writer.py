@@ -173,10 +173,11 @@ class ObsidianWriter:
             self._append_reply_to_parent(parent_note_filename, filename, timestamp)
         
         logger.info(f"Created note: {filename}")
-        
+
         return {
             'filepath': str(filepath),
-            'filename': filename
+            'filename': filename,
+            'content': full_note  # Return content for plugins when using GitHub sync
         }
 
     def _render_note_from_template(
