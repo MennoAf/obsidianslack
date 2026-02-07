@@ -33,6 +33,7 @@ ObsidianSlack/
 │
 └── local-sync/                # Local sync scripts
     ├── README.md              # Local sync guide
+    ├── SYNC_TROUBLESHOOTING.md # Platform-specific troubleshooting
     ├── sync_from_github.sh    # Unix/macOS sync script
     └── sync_from_github.ps1   # Windows PowerShell sync script
 ```

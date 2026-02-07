@@ -285,6 +285,11 @@ nohup ~/watch_sync.sh &
 
 ## Troubleshooting
 
+**For detailed platform-specific troubleshooting (macOS permissions, Linux SELinux, Windows Task Scheduler issues), see:**
+**[📖 SYNC_TROUBLESHOOTING.md](SYNC_TROUBLESHOOTING.md)** - Comprehensive troubleshooting guide
+
+### Quick Fixes
+
 ### Git Authentication Fails
 
 **Error:** `fatal: Authentication failed`
